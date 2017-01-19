@@ -1,14 +1,14 @@
 fun printxy(P) = 
   let 
     fun printCoef(0, _) = print("")
-      | printCoef(1, 0) = print(Int.toString(1))
-      | printCoef(~1, 0) = (
+      | printCoef(1, true) = print(Int.toString(1))
+      | printCoef(~1, true) = (
           print (" - ");
           print(Int.toString(1))
         ) 
-      | printCoef(1, _) = print(" + ")
-      | printCoef(~1, _) = print (" - ")   
-      | printCoef(c: int, 0) = (
+      | printCoef(1, false) = print(" + ")
+      | printCoef(~1, false) = print (" - ")   
+      | printCoef(c: int, true) = (
           if c<0 then (
             print (" -");
             print(Int.toString(~1*c))
@@ -17,7 +17,7 @@ fun printxy(P) =
             print(Int.toString(c))
           )
         )
-      | printCoef(c: int, _) = (
+      | printCoef(c: int, false) = (
           if c<0 then (
             print (" -");
             print(Int.toString(~1*c))
@@ -30,20 +30,20 @@ fun printxy(P) =
 
     fun print_xWithy(nil, e, y:string) = print("")
       | print_xWithy(x::xs, 0, y:string) = (
-          printCoef(x, 0);
           if x=0 then (
             print("")
           )
           else (
+            if y<>"" then printCoef(x, false)
+            else printCoef(x, true);
             print(y)
           );
           print_xWithy(xs, 1, y)
         )
       | print_xWithy(x::xs, 1, y:string) = (
-          printCoef(x, 1);
+          printCoef(x, false);
           if x=0 then (
             print("")
-            (*print(y)*)
           )
           else (
             print("x");
@@ -54,10 +54,9 @@ fun printxy(P) =
       | print_xWithy(x::xs, e, y:string) = (
           if x=0 then (
             print("")
-            (*print(y)*)
           )
           else (
-            printCoef(x, e);
+            printCoef(x, false);
             print("x"); 
             print("^"); 
             print(Int.toString(e));
@@ -69,16 +68,13 @@ fun printxy(P) =
 
     fun print_xy(nil, ey) = (
           if ey=0 then print(Int.toString(0))
-          else  print("");
-          print("\n")
+          else  print("")
         )
       | print_xy(y::ys, 0) = (
-          (*print("HERE:::");*)
           print_xWithy(y, 0, "");
           print_xy(ys, 1) 
         )
       | print_xy(y::ys, 1) = (
-          (*print("ey = 1");*)
           print_xWithy(y, 0, "y");
           print_xy(ys, 2)
         )
@@ -87,11 +83,65 @@ fun printxy(P) =
           print_xy(ys, ey+1)
         )
   in 
-    print_xy(P, 0)
+    print_xy(P, 0);
+    print("\n")
   end;
     
+(*fun evalxy(P, x, y) = 
+  let 
+    fun padd(P, nil) = P
+      | padd(nil, Q) = Q
+      | padd((p:int)::ps, q::qs) = (p + q)::padd(ps, qs);
+    
+    fun smult(nil, q) = nil
+      | smult((p:int)::ps, q) = (p * q)::smult(ps, q);
+
+    fun pmult(P, nil) = nil
+      | pmult(P, q::qs) = padd(smult(P, q), 0::pmult(P, qs));*)
+
+fun evalx(P, xVal) = 
+  let 
+    fun evalPower(base, 0) = 1
+      | evalPower(base, exp) = base * evalPower(base, exp - 1); 
+  
+    fun eval_x(nil, _, _) = 0
+      | eval_x(x::xs, xVal, exp) = (x * evalPower(xVal, exp)) + eval_x(xs, xVal, exp+1);
+  in 
+    eval_x(P, xVal, 0)
+  end;
+  
 
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
