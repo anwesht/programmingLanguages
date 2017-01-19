@@ -19,11 +19,30 @@ fun pmult(P, nil) = nil
 fun printCoef(0) = print("")
   | printCoef(c: int) = (
       if c<0 then (
-        print ("----");
+        print ("-");
         print(Int.toString(~1*c))
       )  
       else ( 
-        print("+++");
+        print("+");
+        print(Int.toString(c))
+      )
+  );
+
+fun printCoef(0, _) = print("")
+  | printCoef(1, 0) = print(Int.toString(1))
+  | printCoef(~1, 0) = (
+      print ("-");
+      print(Int.toString(1))
+    ) 
+  | printCoef(1, _) = print("+")
+  | printCoef(~1, _) = print ("-")   
+  | printCoef(c: int, _) = (
+      if c<0 then (
+        print ("-");
+        print(Int.toString(~1*c))
+      )  
+      else ( 
+        print("+");
         print(Int.toString(c))
       )
   );
@@ -35,19 +54,30 @@ fun printx(nil, c) = (
     )
   | printx(x::xs, 0) = (
       (*print(Int.toString(x)); *)
-      printCoef(x);
+      printCoef(x, 0);
       printx(xs, 1)
     )
   | printx(x::xs, 1) = (
       (*print(Int.toString(x)); *)
-      printCoef(x);
+      printCoef(x, 1);
       print("x"); printx(xs, 2)
     ) 
   | printx(x::xs, e) = (
       (*print(Int.toString(x));*)
-      printCoef(x);
-      print("x"); 
-      print("^"); 
-      print(Int.toString(e)); 
+      if x=0 then 
+        print("")
+      else (
+        printCoef(x, e);
+        print("x"); 
+        print("^"); 
+        print(Int.toString(e))
+      ); 
       printx(xs, e+1)
     );
+
+
+
+
+
+
+
