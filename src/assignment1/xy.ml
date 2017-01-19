@@ -109,6 +109,22 @@ fun evalx(P, xVal) =
   in 
     eval_x(P, xVal, 0)
   end;
+
+fun evalxy(P, xVal, yVal) = 
+  let 
+    fun evalPower(base, 0) = 1
+      | evalPower(base, exp) = base * evalPower(base, exp - 1); 
+  
+    fun eval_xWithy(nil, _, _, _) = 0
+      | eval_xWithy(x::xs, xVal, expX, yVal) = 
+        (x * evalPower(xVal, expX) * yVal) + eval_xWithy(xs, xVal, expX+1, yVal);
+
+    fun eval_xy(nil, _, _, _) = 0
+      | eval_xy(xy::xys, xVal, yVal, expY) = 
+        eval_xWithy(xy, xVal, 0, evalPower(yVal, expY)) + eval_xy(xys, xVal, yVal, expY+1)
+  in 
+    eval_xy(P, xVal, yVal, 0)
+  end;
   
 
     
