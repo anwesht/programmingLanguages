@@ -127,6 +127,20 @@ fun evalxy(P, xVal, yVal) =
   end;
   
 
+(*fun paddx(P, nil) = P
+      | paddx(nil, Q) = Q
+      | paddx((p:int)::ps, q::qs) = (p + q)::paddx(ps, qs);
+*)
+fun paddxy(P, nil) = P
+  | paddxy(nil, Q) = Q
+  | paddxy(p::ps, q::qs) = 
+    let 
+      fun paddx(P, nil) = P
+      | paddx(nil, Q) = Q
+      | paddx((p:int)::ps, q::qs) = (p + q)::paddx(ps, qs);
+    in 
+      paddx(p, q)::paddxy(ps, qs)
+    end;
     
 
 
