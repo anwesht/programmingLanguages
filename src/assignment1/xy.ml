@@ -142,8 +142,17 @@ fun paddxy(P, nil) = P
       paddx(p, q)::paddxy(ps, qs)
     end;
     
+(*fun smult(nil, q) = nil
+      | smult((p:int)::ps, q) = (p * q)::smult(ps, q);*)
 
-
+fun multxy(nil, _) = nil
+  | multxy(xy::xys, mult) = 
+    let
+      fun multx(nil, _) = nil
+        | multx(x::xs, mult) = (x * mult)::multx(xs, mult)
+    in
+      multx(xy, mult)::multxy(xys, mult)
+    end
 
 
 
