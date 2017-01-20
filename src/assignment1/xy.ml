@@ -155,15 +155,67 @@ fun multxy(nil, _) = nil
     end
 
 
+(*fun pmult(P, nil) = nil
+  | pmult(P, q::qs) = 
+      paddxy(multxy(P, q), 0::pmult(P, qs))*)
 
+(*-----------------------------------------------*)
+fun padd(P, nil) = P
+  | padd(nil, Q) = Q
+  | padd((p:int)::ps, q::qs) = (p + q)::padd(ps, qs);
 
+(*smult(P, q) multiplies polynomial P by scalar q*)
+fun smult(nil, q) = nil
+  | smult((p:int)::ps, q) = (p * q)::smult(ps, q);
 
+(*pmult(P, Q) produces PQ
+    To multiply a polynomial by x, we "shift" the terms right by
+    inserting an element 0 in front of the list that represents
+    PS.
+*)
+fun pmult(P, nil) = nil
+  | pmult(P, q::qs) = padd(smult(P, q), 0::pmult(P, qs));
 
+(*-----------------------------------------------*)
 
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  (*| pmultxy(p::ps, q::qs) = paddxy(pmult(p, q), nil::pmultxy(P, qs));*)
+  | pmultxy(p::ps, q::qs) = pmult(p, q)::*)
 
+(*[] :: []*)
+(*fun multAllPWithq(p::ps, q) = pmult(p, q)::multAllPWithq(ps, q)*)
 
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  | pmultxy(P as p::ps, q::qs) = multAllPWithq(P, q)::pmultxy(ps, qs)
+*)
 
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  | pmultxy(p::ps, q::qs) = 
+      pmult(p, q), nil::pmultxy(ps, q)*)
 
+fun pmultx(P, nil) = P
+  | pmultx(nil, _) = nil
+  | pmultx((p:int list)::ps, q: int list) = 
+      pmult(p, q)::pmultx(ps, q)
+
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  | pmultxy(P, q::qs) = nil@pmultx(P, q)@pmultxy(P, qs);*)
+  (*| pmultxy(P as p::ps, q::qs) = nil@pmultx(P, q)::pmultxy(P, qs)*)
+
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  | pmultxy(P, q::qs) = paddxy(nil@pmultx(P, q), pmultxy(P, qs));*)
+
+(*fun pmultxy(P, nil) = P
+  | pmultxy(nil, Q) = Q
+  | pmultxy(P, q::qs) = paddxy(pmultx(P, q), nil::pmultxy(P, qs));*)
+
+fun pmultxy(P, nil) = nil
+  | pmultxy(P, q::qs) = paddxy(pmultx(P, q), nil::pmultxy(P, qs));
 
 
 
