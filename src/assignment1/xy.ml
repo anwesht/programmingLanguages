@@ -1,16 +1,29 @@
+(*
+ * Created by atuladhar on 01/19/17.
+ * Pledge: I pledge my Honor that I have not cheated, and will not cheat, on this assignment
+ * Name: Anwesh Tuladhar
+ *)
+
+(** Prints the polynomial in human readable form.
+  * @param P => int list list representation of the polynomial
+  *)
 fun printxy(P) = 
   let 
+    (** Prints the formatted value of the coeficient 
+      * @param c => coefficient
+      * @param isFirst: bool => Flag to check for first position
+      *)
     fun printCoef(0, _) = print("")
       | printCoef(1, true) = print(Int.toString(1))
       | printCoef(~1, true) = (
-          print (" - ");
+          print (" -");
           print(Int.toString(1))
         ) 
       | printCoef(1, false) = print(" + ")
-      | printCoef(~1, false) = print (" - ")   
+      | printCoef(~1, false) = print (" -")   
       | printCoef(c: int, true) = (
           if c<0 then (
-            print (" -");
+            print (" - ");
             print(Int.toString(~1*c))
           )  
           else ( 
@@ -19,7 +32,7 @@ fun printxy(P) =
         )
       | printCoef(c: int, false) = (
           if c<0 then (
-            print (" -");
+            print (" - ");
             print(Int.toString(~1*c))
           )  
           else ( 
@@ -87,17 +100,6 @@ fun printxy(P) =
     print("\n")
   end;
     
-(*fun evalxy(P, x, y) = 
-  let 
-    fun padd(P, nil) = P
-      | padd(nil, Q) = Q
-      | padd((p:int)::ps, q::qs) = (p + q)::padd(ps, qs);
-    
-    fun smult(nil, q) = nil
-      | smult((p:int)::ps, q) = (p * q)::smult(ps, q);
-
-    fun pmult(P, nil) = nil
-      | pmult(P, q::qs) = padd(smult(P, q), 0::pmult(P, qs));*)
 
 fun evalx(P, xVal) = 
   let 
@@ -126,11 +128,6 @@ fun evalxy(P, xVal, yVal) =
     eval_xy(P, xVal, yVal, 0)
   end;
   
-
-(*fun paddx(P, nil) = P
-      | paddx(nil, Q) = Q
-      | paddx((p:int)::ps, q::qs) = (p + q)::paddx(ps, qs);
-*)
 fun paddxy(P, nil) = P
   | paddxy(nil, Q) = Q
   | paddxy(p::ps, q::qs) = 
@@ -142,7 +139,6 @@ fun paddxy(P, nil) = P
       paddx(p, q)::paddxy(ps, qs)
     end;
     
-
 fun multxy(nil, _) = nil
   | multxy(xy::xys, mult) = 
     let
@@ -151,27 +147,6 @@ fun multxy(nil, _) = nil
     in
       multx(xy, mult)::multxy(xys, mult)
     end
-
-(*fun padd(P, nil) = P
-  | padd(nil, Q) = Q
-  | padd((p:int)::ps, q::qs) = (p + q)::padd(ps, qs);*)
-
-(*smult(P, q) multiplies polynomial P by scalar q*)
-(*fun smult(nil, q) = nil
-  | smult((p:int)::ps, q) = (p * q)::smult(ps, q);*)
-
-(*pmult(P, Q) produces PQ
-    To multiply a polynomial by x, we "shift" the terms right by
-    inserting an element 0 in front of the list that represents
-    PS.
-*)
-(*fun pmult(P, nil) = nil
-  | pmult(P, q::qs) = padd(smult(P, q), 0::pmult(P, qs));
-
-fun pmultx(P, nil) = P
-  | pmultx(nil, _) = nil
-  | pmultx((p:int list)::ps, q: int list) = 
-      pmult(p, q)::pmultx(ps, q)*)
 
 fun pmultxy(_, nil) = nil
   | pmultxy(nil, _) = nil
