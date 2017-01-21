@@ -20,7 +20,7 @@ fun printxy(P) =
       | printCoef(1, false, _) = " + "
       | printCoef(~1, false, _) = " -"
       | printCoef(c: int, true, _) = (
-          if c < 0 then " - "^Int.toString(~1 * c)
+          if c < 0 then " -"^Int.toString(~1 * c)
           else Int.toString(c)
         )
       | printCoef(c: int, false, 0) = (
