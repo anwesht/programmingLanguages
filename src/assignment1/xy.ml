@@ -18,13 +18,14 @@ fun printxy(P) =
       | printCoef(~1, true, _) = " -1"
       | printCoef(1, false, 0) = ""
       | printCoef(1, false, _) = " + "
-      | printCoef(~1, false, _) = " -"
+      | printCoef(~1, false, 0) = " -"
+      | printCoef(~1, false, _) = " - "
       | printCoef(c: int, true, _) = (
-          if c < 0 then " - "^Int.toString(~1 * c)
+          if c < 0 then " -"^Int.toString(~1 * c)
           else Int.toString(c)
         )
       | printCoef(c: int, false, 0) = (
-          if c < 0 then " - "^Int.toString(~1 * c)
+          if c < 0 then " -"^Int.toString(~1 * c)
           else Int.toString(c)
         )
       | printCoef(c: int, false, _) = (
@@ -57,6 +58,7 @@ fun printxy(P) =
         );
 
     (** Evaluates the y portion of the polynomial and calls print_xWithy 
+      * where the x and y portions are combined in the out string list
       * @param y::ys => polynomial in x and y
       * @param ey => exponent of y
       *)
