@@ -9,7 +9,7 @@
   *)
 fun printxy(P) = 
   let 
-    (** Returns the formatted value of the coefficient 
+    (** Prints the formatted value of the coeficient 
       * @param c => coefficient
       * @param isFirst: bool => Flag to check for first position
       *)
@@ -20,7 +20,7 @@ fun printxy(P) =
       | printCoef(1, false, _) = " + "
       | printCoef(~1, false, _) = " -"
       | printCoef(c: int, true, _) = (
-          if c < 0 then " -"^Int.toString(~1 * c)
+          if c < 0 then " - "^Int.toString(~1 * c)
           else Int.toString(c)
         )
       | printCoef(c: int, false, 0) = (
@@ -31,12 +31,12 @@ fun printxy(P) =
           if c < 0 then " - "^Int.toString(~1 * c)
           else " + "^Int.toString(c)
         )
+    (*fun printCoef(0, )      *)
 
-    (** Concat x then the y part of the polynomial
+    (** print x then the y part of the polynomial
       * @param x::xs => polynomial in x = inner int list
       * @param e => exponent of x
       * @param y => string representing the y portion of the polynomial
-      * @param out => the output string 
       *)
     fun print_xWithy(nil, _, _, out) = out
       | print_xWithy(x::xs, 0, y:string, out) = (
@@ -44,6 +44,7 @@ fun printxy(P) =
           else 
             if y<>"" then print_xWithy(xs, 1, y, out@[printCoef(x, false, length out)]@[y])
             else print_xWithy(xs, 1, y, out@[printCoef(x, true, length out)]@[y])
+          
         )
       | print_xWithy(x::xs, 1, y:string, out) = (
           if x=0 then print_xWithy(xs, 2, y, out)  
@@ -64,16 +65,15 @@ fun printxy(P) =
           else  out
         )
       | print_xy(y::ys, 0, out: string list) = (
-          print_xy(ys, 1, out@print_xWithy(y, 0, "", nil)) 
+          print_xy(ys, 1, print_xWithy(y, 0, "", out)) 
         )
       | print_xy(y::ys, 1, out: string list) = (
-          print_xy(ys, 2, out@print_xWithy(y, 0, "y", nil))
+          print_xy(ys, 2, print_xWithy(y, 0, "y", out))
         )
       | print_xy(y::ys, ey, out: string list) = (
-          print_xy(ys, ey+1, out@print_xWithy(y, 0, "y^"^Int.toString(ey), nil))
+          print_xy(ys, ey+1, print_xWithy(y, 0, "y^"^Int.toString(ey), out))
         )
 
-    (** Prints the contents of a string list *)
     fun printList(nil) = print("\n")
       | printList(x::xs: string list) = (
         print(x);
