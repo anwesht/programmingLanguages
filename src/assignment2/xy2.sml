@@ -50,27 +50,22 @@ fun evalxy nil _ _= 0
       ) (0, 0) (P))
       ;
 
-(*fun paddx P nil = nil
-  | paddx nil Q = nil
-  | paddx P (qxy::qxys) = 
-      foldl (
-        fn  (pxy, (nil, combined)) => (nil, (pxy, 0)::combined)
-          | (pxy, (qx::qxs, combined)) => (qx, (pxy, qxy)::combined)
-      ) ((qxy, nil)) (P)
-      ;
-*)
-
-(*fun paddx P nil = nil
-  | paddx nil Q = nil*)
 fun paddx P Q = 
-      foldl (
+  #2 (foldl (
+    fn  (pxy, (nil, tupleListList)) => (nil, (pxy, [])::tupleListList)
+      | (pxy, (qxy::qxys, tupleListList)) => (qxys, (pxy, qxy)::tupleListList) 
+  ) ((if length Q < length P then Q else P, nil)) (if length Q < length P then Q else Q))
+
+      (*foldl (
           fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
         ) (nil) (
             #2 (foldl (
-              fn  (pxy, (nil, tupleList)) => (nil, (pxy, 0)::tupleList)
-                | (pxy, (qxy::qxys, tupleList)) => (qxys, (pxy, qxy)::tupleList) 
-              ) ((Q, nil)) (P))
-      )
+              fn  (px, (nil, tupleList)) => (nil, (px, 0)::tupleList)
+                | (px, (qx::qxs, tupleList)) => (qxs, (px, qx)::tupleList) 
+              ) ((if length Q < length P then Q else P, nil)) (if length Q < length P then Q else Q))
+
+
+      )*)
       ;
 
 
@@ -78,5 +73,7 @@ val p = [[1], [0,~2,0,0,3], [],[],[], [], [~5, 0, 7]];
 val q = [[~1], [~1]];
 val t1 = [1,2,3,4];
 val t2 = [5,6,7,8,9,10];
+val tt1 = [[1,2], [3,4]];
+val tt2 = [[5,6], [7,8], [9,10]];
 (* A function that will multiply given number with the seed.
  * *)
