@@ -43,17 +43,33 @@ fun evalx nil _ = 0
       ) ((0, 0)) (P)) 
       ;
 
-fun eval nil _ _= 0
-  (*| eval _ 0 _ = 0*)
+(*fun eval nil _ _= 0
   | eval P xVal yVal = 
       #1 (foldl (fn (xList, (total, yValue)) => 
         ((total + (#1 (foldl (
                 fn (xCoef, (sum, xValue)) => 
                   (sum + xCoef * (if xValue = 0 then 1 else xValue), (if xValue = 0 then 1 else xValue) * xVal)
-                ) ((0, 0)) (map (fn x => x * (if yValue > 0 then yValue else 1)) (xList)) 
+                ) ((0, 0)) (map (fn x => x * (if yValue = 0 then 1 else yValue)) (xList)) 
               )
             )
-          ), (if yValue > 0 then yValue else 1) * yVal
+          ), ((if yValue = 0 then 1 else yValue) * yVal)
+        )
+      ) (0, 0) (P))
+      ;*)
+
+fun eval nil _ _= 0
+  (*| eval _ 0 _ = 0*)
+  | eval P xVal yVal = 
+      #1 (foldl (fn (xList, (total, yValue)) => (
+        print(Int.toString(total)^"\n");
+        ((total + (#1 (foldl (
+                fn (xCoef, (sum, xValue)) => 
+                  (sum + xCoef * (if xValue = 0 then 1 else xValue), ((if xValue = 0 then 1 else xValue) * xVal))
+                ) ((0, 0)) (map (fn x => x * (if yValue = 0 then 1 else yValue)) (xList)) 
+              )
+            )
+          ), ((if yValue = 0 then 1 else yValue) * yVal)
+        )
         )
       ) (0, 0) (P))
       ;
