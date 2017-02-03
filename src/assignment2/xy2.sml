@@ -26,15 +26,39 @@ fun multxy nil _ = nil
       ;
 *)
 
-fun eval nil _ = 0
-  | eval _ 0 = 0
-  | eval P xVal = 
+(*fun evalx nil _ = 0
+  | evalx _ 0 = 0
+  | evalx P xVal = 
       #1 (foldl (fn (xCoef, (sum, xValue)) => 
-          (*val s = sum + xCoef * (if xValue > 0 then xValue else 1);*)
           (sum + xCoef * (if xValue > 0 then xValue else 1), (if xValue > 0 then xValue else 1) * xVal)
-        
+      ) ((0, 0)) (P)) 
+      ;*)
+
+fun evalx nil _ = 0
+  | evalx _ 0 = 0
+  | evalx P xVal = 
+      #1 (foldl (
+        fn (xCoef, (sum, xValue)) => 
+          (sum + xCoef * (if xValue = 0 then 1 else xValue), (if xValue = 0 then 1 else xValue) * xVal)
       ) ((0, 0)) (P)) 
       ;
 
+fun eval nil _ _= 0
+  (*| eval _ 0 _ = 0*)
+  | eval P xVal yVal = 
+      #1 (foldl (fn (xList, (total, yValue)) => 
+        ((total + (#1 (foldl (
+                fn (xCoef, (sum, xValue)) => 
+                  (sum + xCoef * (if xValue = 0 then 1 else xValue), (if xValue = 0 then 1 else xValue) * xVal)
+                ) ((0, 0)) (map (fn x => x * (if yValue > 0 then yValue else 1)) (xList)) 
+              )
+            )
+          ), (if yValue > 0 then yValue else 1) * yVal
+        )
+      ) (0, 0) (P))
+      ;
+
+val p = [[1], [0,~2,0,0,3], [],[],[], [], [~5, 0, 7]];
+val q = [[~1], [~1]];
 (* A function that will multiply given number with the seed.
  * *)
