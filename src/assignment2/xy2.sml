@@ -21,11 +21,20 @@ fun evalx nil _ = 0
       ;
 
 fun eval nil _ _= 0
+  | eval _ 0 0 = 0
   | eval (xy::xys) xVal 0 = 
       #1 (foldl (
         fn (xCoef, (sum, xValue)) => 
           (sum + xCoef * (if xValue = 0 then 1 else xValue), (if xValue = 0 then 1 else xValue) * xVal)
       ) ((0, 0)) (xy)) 
+  | eval P 0 yVal = 
+      #1 (foldl (
+        fn (nil, (total, yValue)) => (total, ((if yValue = 0 then 1 else yValue) * yVal))
+          | (x::_, (total, yValue)) => (
+            print(Int.toString(total)^"\n");
+            ((total + (x * (if yValue = 0 then 1 else yValue))), ((if yValue = 0 then 1 else yValue) * yVal))
+          )
+      ) (0, 0) (P))
   | eval P xVal yVal = 
       #1 (foldl (fn (xList, (total, yValue)) => (
         print(Int.toString(total)^"\n");
