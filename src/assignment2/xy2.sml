@@ -20,14 +20,14 @@ fun evalx nil _ = 0
       ) ((0, 0)) (P)) 
       ;
 
-fun eval nil _ _= 0
-  | eval _ 0 0 = 0
-  | eval (xy::xys) xVal 0 = 
+fun evalxy nil _ _= 0
+  | evalxy _ 0 0 = 0
+  | evalxy (xy::xys) xVal 0 = 
       #1 (foldl (
         fn (xCoef, (sum, xValue)) => 
           (sum + xCoef * (if xValue = 0 then 1 else xValue), (if xValue = 0 then 1 else xValue) * xVal)
       ) ((0, 0)) (xy)) 
-  | eval P 0 yVal = 
+  | evalxy P 0 yVal = 
       #1 (foldl (
         fn (nil, (total, yValue)) => (total, ((if yValue = 0 then 1 else yValue) * yVal))
           | (x::_, (total, yValue)) => (
@@ -35,7 +35,7 @@ fun eval nil _ _= 0
             ((total + (x * (if yValue = 0 then 1 else yValue))), ((if yValue = 0 then 1 else yValue) * yVal))
           )
       ) (0, 0) (P))
-  | eval P xVal yVal = 
+  | evalxy P xVal yVal = 
       #1 (foldl (fn (xList, (total, yValue)) => (
         print(Int.toString(total)^"\n");
         ((total + (#1 (foldl (
@@ -50,8 +50,35 @@ fun eval nil _ _= 0
       ) (0, 0) (P))
       ;
 
+(*fun paddx P nil = nil
+  | paddx nil Q = nil
+  | paddx P (qxy::qxys) = 
+      foldl (
+        fn  (pxy, (nil, combined)) => (nil, (pxy, 0)::combined)
+          | (pxy, (qx::qxs, combined)) => (qx, (pxy, qxy)::combined)
+      ) ((qxy, nil)) (P)
+      ;
+*)
+
+(*fun paddx P nil = nil
+  | paddx nil Q = nil*)
+fun paddx P Q = 
+      #2 (foldl (
+        fn  (pxy, (nil, combined)) => (
+              print("nil com: "^Int.toString(pxy)^"\n");
+              (nil, (pxy, 0)::combined)
+            )
+          | (pxy, (qxy::qxys, combined)) => (
+              print("conbined"^Int.toString(qxy)^"\n");
+              (qxys, (pxy, qxy)::combined)
+            )
+      ) ((Q, nil)) (P))
+      ;
+
 
 val p = [[1], [0,~2,0,0,3], [],[],[], [], [~5, 0, 7]];
 val q = [[~1], [~1]];
+val t1 = [1,2,3,4];
+val t2 = [5,6,7,8,9,10];
 (* A function that will multiply given number with the seed.
  * *)
