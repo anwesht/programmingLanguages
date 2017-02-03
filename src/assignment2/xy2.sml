@@ -69,8 +69,8 @@ fun evalxy nil _ _= 0
       ;*)
 
 fun paddx P Q = 
-  map (fn (pp, qq) => 
-    foldl (
+  foldl (fn ((pp, qq), sumXY) => 
+    ((foldl (
           fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
         ) (nil) (
             #2 (foldl (
@@ -78,12 +78,12 @@ fun paddx P Q =
                 | (px, (qx::qxs, tupleList)) => (qxs, (px, qx)::tupleList) 
               ) ((if length qq < length pp then qq else pp, nil)) (if length qq < length pp then pp else qq))
             )
-      ) (#2 (foldl (
+      )::sumXY)) (nil)  (#2 (foldl (
               fn  (pxy, (nil, tupleListList)) => (nil, (pxy, [])::tupleListList)
                 | (pxy, (qxy::qxys, tupleListList)) => (qxys, (pxy, qxy)::tupleListList) 
             ) ((if length Q < length P then Q else P, nil)) (if length Q < length P then P else Q)
         )
-      )      
+      )  
       ;
 
 
