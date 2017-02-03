@@ -81,7 +81,7 @@ fun paddxy P Q =
           (0::qList, (map (fn qx => px*qx) (qList)))
       ) *)
 
-      foldl (
+      #2 (foldl (
         fn (px, (qList, qMultList)) => 
           (0::qList, (
             foldl (
@@ -93,7 +93,7 @@ fun paddxy P Q =
                 ) (qMultList, nil) (map (fn qx => px*qx) (qList))
               )
             )))
-      ) ((Q, nil)) (P)
+      ) ((Q, nil)) (P))
       (*foldl (
           fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
         ) (nil) (
