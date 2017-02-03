@@ -63,16 +63,14 @@ fun evalxy nil _ _= 0
 (*fun paddx P nil = nil
   | paddx nil Q = nil*)
 fun paddx P Q = 
-      #2 (foldl (
-        fn  (pxy, (nil, combined)) => (
-              print("nil com: "^Int.toString(pxy)^"\n");
-              (nil, (pxy, 0)::combined)
-            )
-          | (pxy, (qxy::qxys, combined)) => (
-              print("conbined"^Int.toString(qxy)^"\n");
-              (qxys, (pxy, qxy)::combined)
-            )
-      ) ((Q, nil)) (P))
+      foldl (
+          fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
+        ) (nil) (
+            #2 (foldl (
+              fn  (pxy, (nil, tupleList)) => (nil, (pxy, 0)::tupleList)
+                | (pxy, (qxy::qxys, tupleList)) => (qxys, (pxy, qxy)::tupleList) 
+              ) ((Q, nil)) (P))
+      )
       ;
 
 
