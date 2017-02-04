@@ -69,7 +69,7 @@ fun paddxy P Q =
       ;
 
 (*working inner multiple*)
-(*fun pmultx P Q = 
+fun pmultx P Q = 
       #2 (foldl (
         fn (px, (qList, qMultList)) => 
           (0::qList, (
@@ -84,18 +84,19 @@ fun paddxy P Q =
             )))
       ) ((Q, nil)) (P))
 
-      *)
+      
 
 
 fun pmultxy P Q = 
-  #2 (foldl (
+  #2 ((foldl (
       fn(pxList, (fullQList, fullPQMultList)) =>
         (*([]::fullQList, (paddxy(SOMETHING, LIST OF LISTS p_part Multiplying FULL Q LIST)))*)
-        (*([]::fullQList, (paddxy(fullPQMultList, *)
-        (nil::fullQList, 
+        (*([]::fullQList, paddxy(fullPQMultList, *)
+        ([]::fullQList, paddxy( fullPQMultList)
+        (*(nil::fullQList, *)
             (foldl (
               fn (qxList, pMultqFullList) => 
-                ((#2 (foldl (
+                (#2 (foldl (
                         fn (px, (qList, qMultList)) => 
                           (0::qList, (
                             foldl (
@@ -109,9 +110,10 @@ fun pmultxy P Q =
                             )))
                       (*) ((Q, nil)) (P))*)
                       ) ((qxList, nil)) (pxList))
-                )::pMultqFullList)
+                ::pMultqFullList)
               ) (nil) (fullQList)
             ) 
+            )
           )
         )
         ((Q, nil)) (P)
