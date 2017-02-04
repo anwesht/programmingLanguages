@@ -68,19 +68,8 @@ fun paddxy P Q =
       )  
       ;
 
-(*fun pmultx _ nil = nil
-  | pmultx nil _ = nil*)
-  fun pmultx P Q = 
-      (*foldl (
-        fn (px, (qList, qMultList) => 
-          (0::qList, (map (fn qx => px*qx) (qList))
-      )*)
-
-      (*foldl (
-        fn (px, (qList, qMultList)) => 
-          (0::qList, (map (fn qx => px*qx) (qList)))
-      ) *)
-
+(*working inner multiple*)
+(*fun pmultx P Q = 
       #2 (foldl (
         fn (px, (qList, qMultList)) => 
           (0::qList, (
@@ -94,6 +83,41 @@ fun paddxy P Q =
               )
             )))
       ) ((Q, nil)) (P))
+
+      *)
+
+
+fun pmultxy P Q = 
+  #2 (foldl (
+      fn(pxList, (fullQList, fullPQMultList)) =>
+        (*([]::fullQList, (paddxy(SOMETHING, LIST OF LISTS p_part Multiplying FULL Q LIST)))*)
+        (*([]::fullQList, (paddxy(fullPQMultList, *)
+        (nil::fullQList, 
+            (foldl (
+              fn (qxList, pMultqFullList) => 
+                ((#2 (foldl (
+                        fn (px, (qList, qMultList)) => 
+                          (0::qList, (
+                            foldl (
+                              fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
+                            ) (nil) (
+                              #2 (foldl (
+                                fn  (px, (nil, tupleList)) => (nil, (px, 0)::tupleList)
+                                  | (px, (qx::qxs, tupleList)) => (qxs, (px, qx)::tupleList) 
+                                ) (qMultList, nil) (map (fn qx => px*qx) (qList))
+                              )
+                            )))
+                      (*) ((Q, nil)) (P))*)
+                      ) ((qxList, nil)) (pxList))
+                )::pMultqFullList)
+              ) (nil) (fullQList)
+            ) 
+          )
+        )
+        ((Q, nil)) (P)
+      )
+;
+      
       (*foldl (
           fn (tup, sumxList) => (#1 tup + #2 tup)::sumxList
         ) (nil) (
