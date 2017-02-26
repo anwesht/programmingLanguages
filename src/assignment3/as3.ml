@@ -15,7 +15,7 @@ datatype expr = TrueExpr | FalseExpr | IntExpr of int
 
 exception Capture;
 
-fun isFV expr var = 
+(*fun isFV expr var = 
   let 
     fun getVarList TrueExpr  vList = vList
       | getVarList FalseExpr vList = vList
@@ -37,7 +37,19 @@ fun isFV expr var =
       | checkFV _ _ _ = false;
   in 
     checkFV var (getVarList expr nil) 0
-  end;
+  end;*)
+
+fun isFV TrueExpr var = false
+  | isFV FalseExpr  var = false
+  | isFV (IntExpr(_)) var = false
+  | isFV (VarExpr(v)) var = v=var
+  | isFV (PlusExpr(left, right)) var = (isFV left var) orelse (isFV right var)
+  | isFV (LessExpr(left, right)) var = (isFV left var) orelse (isFV right var)
+  | isFV (IfExpr(condition, thenBranch, elseBranch)) var = 
+      (isFV condition var) orelse (isFV thenBranch var) orelse (isFV elseBranch var)
+  | isFV (ApplyExpr(function, argument))  var = (isFV function var) orelse  (isFV argument var)
+  | isFV (FunExpr(functionName, parameterName, parameterType, returnType, body)) var = 
+      ((isFV body var) andalso var <> functionName andalso  var <> parameterName);
 
 (*fun f(x) = (x + (fun g (y) = (fun h (za) = h(y)))(g(y) + z)(f(x)));*)
 val t = TrueExpr;
@@ -51,7 +63,8 @@ val funExp = FunExpr("f", "a", Int, Int, ifExp);
 
 val f1 = FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x")));
 val f2 = ApplyExpr(FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x"))), IntExpr(5));
-val f3 = PlusExpr(VarExpr("x"), 
+(*val f3 = PlusExpr(
+          VarExpr("x"), 
           ApplyExpr(
             FunExpr("f", "x", Int, Int, 
               ApplyExpr(
@@ -68,6 +81,29 @@ val f3 = PlusExpr(VarExpr("x"),
             )
           )
         );
+*)
+val f3 =  FunExpr(
+            "f", "x", Int, Int, 
+            PlusExpr(
+              VarExpr("x"),   (*false*)
+              ApplyExpr(  (*false*)
+                FunExpr("f", "x", Int, Int,  (*false*)
+                  PlusExpr( (*false orelse true = true*)
+                    ApplyExpr(
+                      FunExpr("f", "z", Int, Int,   (*false*)
+                        ApplyExpr(VarExpr("f"), VarExpr("x"))
+                      ), 
+                      ApplyExpr(VarExpr("f"), VarExpr("x")) (*true*)
+                    ), 
+                    VarExpr("z")) (*false*)
+                ),
+                ApplyExpr(
+                  VarExpr("f"), 
+                  VarExpr("x")
+                )
+              )
+            )
+          );
 
 
 
