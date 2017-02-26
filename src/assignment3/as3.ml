@@ -39,9 +39,9 @@ exception Capture;
     checkFV var (getVarList expr nil) 0
   end;*)
 
-fun isFV TrueExpr var = false
-  | isFV FalseExpr  var = false
-  | isFV (IntExpr(_)) var = false
+fun isFV TrueExpr _ = false
+  | isFV FalseExpr  _ = false
+  | isFV (IntExpr(_)) _ = false
   | isFV (VarExpr(v)) var = v=var
   | isFV (PlusExpr(left, right)) var = (isFV left var) orelse (isFV right var)
   | isFV (LessExpr(left, right)) var = (isFV left var) orelse (isFV right var)
@@ -50,6 +50,26 @@ fun isFV TrueExpr var = false
   | isFV (ApplyExpr(function, argument))  var = (isFV function var) orelse  (isFV argument var)
   | isFV (FunExpr(functionName, parameterName, parameterType, returnType, body)) var = 
       ((isFV body var) andalso var <> functionName andalso  var <> parameterName);
+
+fun sub (e:expr) x TrueExpr = TrueExpr
+  | sub e x FalseExpr = FalseExpr
+  | sub e x (ie as IntExpr(_)) = ie
+  | sub e x (ve as VarExpr(v)) = if x=v then e else ve
+  | sub e x (PlusExpr(left, right)) = PlusExpr((sub e x left), (sub e x right))
+  | sub e x (LessExpr(left, right)) = LessExpr((sub e x left), (sub e x right))
+  | sub e x (IfExpr(condition, thenBranch, elseBranch)) = 
+      IfExpr((sub e x condition), (sub e x thenBranch), (sub e x elseBranch))
+  | sub e x (ApplyExpr(function, argument)) = ApplyExpr((sub e x function), (sub e x argument))
+  | sub e x (fe as FunExpr(functionName, parameterName, parameterType, returnType, body)) = 
+      if (functionName = x orelse parameterName = x) then fe
+      else if (not (isFV e functionName) andalso not (isFV e parameterName)) then
+        FunExpr(functionName, parameterName, parameterType, returnType, 
+          (sub e x body)
+        )
+      else raise Capture;
+      
+
+
 
 (*fun f(x) = (x + (fun g (y) = (fun h (za) = h(y)))(g(y) + z)(f(x)));*)
 val t = TrueExpr;
@@ -63,25 +83,6 @@ val funExp = FunExpr("f", "a", Int, Int, ifExp);
 
 val f1 = FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x")));
 val f2 = ApplyExpr(FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x"))), IntExpr(5));
-(*val f3 = PlusExpr(
-          VarExpr("x"), 
-          ApplyExpr(
-            FunExpr("f", "x", Int, Int, 
-              ApplyExpr(
-                FunExpr("f", "z", Int, Int, 
-                  ApplyExpr(VarExpr("f"), VarExpr("x"))), 
-                PlusExpr(
-                  ApplyExpr(VarExpr("f"), VarExpr("x")), 
-                  VarExpr("z"))
-              )
-            ),
-            ApplyExpr(
-              VarExpr("f"), 
-              VarExpr("x")
-            )
-          )
-        );
-*)
 val f3 =  FunExpr(
             "f", "x", Int, Int, 
             PlusExpr(
@@ -104,6 +105,21 @@ val f3 =  FunExpr(
               )
             )
           );
+
+val f4 = FunExpr(
+          "f", "x", Int, Int, 
+          PlusExpr(
+            VarExpr("x"),
+            VarExpr("y")
+          )
+        );
+val f5 = FunExpr(
+          "f", "z", Int, Int, 
+          PlusExpr(
+            VarExpr("z"),
+            VarExpr("y")
+          )
+        );
 
 
 
