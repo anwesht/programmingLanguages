@@ -4,8 +4,10 @@
  * Name: Anwesh Tuladhar
  *)
 
+(** Declaration of DataTypes for the language. *)
 datatype typ = Bool | Int | Arrow of typ * typ;
 
+(** Declaration of  expr types for the language. *)
 datatype expr = TrueExpr | FalseExpr | IntExpr of int
     | PlusExpr of expr * expr | LessExpr of expr * expr
     | IfExpr of expr * expr * expr
@@ -13,32 +15,14 @@ datatype expr = TrueExpr | FalseExpr | IntExpr of int
     | ApplyExpr of expr * expr
     | FunExpr of string * string * typ * typ * expr;
 
+(** Declaration of Capture Exception*)
 exception Capture;
 
-(*fun isFV expr var = 
-  let 
-    fun getVarList TrueExpr  vList = vList
-      | getVarList FalseExpr vList = vList
-      | getVarList (IntExpr(_)) vList = vList
-      | getVarList (VarExpr(v)) vList = v::vList
-      | getVarList (PlusExpr(left, right)) vList = (getVarList left vList) @ (getVarList right vList)
-      | getVarList (LessExpr(left, right)) vList = (getVarList left vList) @ (getVarList right vList)
-      | getVarList (IfExpr(condition, thenBranch, elseBranch)) vList = (getVarList condition vList) @ (getVarList thenBranch vList) @ (getVarList elseBranch vList)
-      | getVarList (ApplyExpr(function, argument)) vList = (getVarList function vList) @ (getVarList argument vList)
-      | getVarList (FunExpr(functionName, parameterName, parameterType, returnType, body)) vList = functionName::parameterName::(getVarList body vList);
-
-    fun checkFV _ nil vCount= vCount < 2
-      | checkFV var (v::vs) 0 = 
-        if v=var then checkFV var vs 1
-        else checkFV var vs 0
-      | checkFV (var:string) (v::vs) 1 = 
-        if v=var then false
-        else checkFV var vs 1
-      | checkFV _ _ _ = false;
-  in 
-    checkFV var (getVarList expr nil) 0
-  end;*)
-
+(** Checks whether a given variable is free or not in the provided expression.
+  * @param var => The name of the variable for which the check is performed.
+  * @param e => the expression in which to check if the variable is free.
+  * @returns => true iff var is a free variable in e.
+  *)
 fun isFV TrueExpr _ = false
   | isFV FalseExpr  _ = false
   | isFV (IntExpr(_)) _ = false
@@ -51,6 +35,13 @@ fun isFV TrueExpr _ = false
   | isFV (FunExpr(functionName, parameterName, parameterType, returnType, body)) var = 
       ((isFV body var) andalso var <> functionName andalso  var <> parameterName);
 
+(** Performs the substitution [e/x]e'.
+  * @param e => the expression with which to replace all free x's in e'
+  * @param x => string representing the variable which is to be replaced in e'
+  * @param e' => The expression in which the substitution is to be done.
+  * @returns => The expression e' with e replacing all free x's in e'.
+  * @throws => Capture expression when a substitution cannot be performed.
+  *)
 fun sub (e:expr) x TrueExpr = TrueExpr
   | sub e x FalseExpr = FalseExpr
   | sub e x (ie as IntExpr(_)) = ie
@@ -67,60 +58,36 @@ fun sub (e:expr) x TrueExpr = TrueExpr
           (sub e x body)
         )
       else raise Capture;
-
-(*fun uniquifyVars expr = 
-  let     
-    fun uniquify TrueExpr _ = TrueExpr
-      | uniquify FalseExpr _ = FalseExpr
-      | uniquify (ie as IntExpr(_)) _ = ie
-      | uniquify (ve as VarExpr(_)) _ = ve
-      | uniquify (PlusExpr(left, right)) count = PlusExpr((sub e x left), (sub e x right))
-      | uniquify (LessExpr(left, right)) count = LessExpr((sub e x left), (sub e x right))
-      | uniquify (IfExpr(condition, thenBranch, elseBranch)) count = 
-          IfExpr((sub e x condition), (sub e x thenBranch), (sub e x elseBranch))
-      | uniquify (ApplyExpr(function, argument)) count = ApplyExpr((sub e x function), (sub e x argument))
-      | uniquify (fe as FunExpr(functionName, parameterName, parameterType, returnType, body)) count = 
-          if (functionName = x orelse parameterName = x) then fe
-          else if (not (isFV e functionName) andalso not (isFV e parameterName)) then
-            FunExpr(functionName, parameterName, parameterType, returnType, 
-              (sub e x body)
-            )
-          else raise Capture;
-  in 
-    uniquify expr 101
-  end;*)
       
+(** Finds the alpha-equivalent expression with neutral and uniquely named variables.
+  * @param expr => the expression for which alpha-equivalent expression is to be found.
+  *)
 fun uniquifyVars expr = 
   let
+    (** Renamees variables based on current scope.
+      * @param expr = Input expression in which to rename variables.
+      * @param inScope = (string*string) list 
+          => where first string is the original name and the second string is the new name.
+          => each time a FunExpr is encountered, the inScope list is augmented with the current scope.
+          => each time VarExpr is encountered, the variable name is searched for in the inScope list. 
+            If found, the corresponding renamed varName is used 
+            Else a new neutral and unique name is provided using the count.
+      * @param count = integer value to keep track of the number of variables and functions.
+      * @returns => (expr*int) => where expr is the same as the input expression but with renamed variables
+          and int is the new count after renaming all the variables in that expression.
+      *)
     fun uniquify TrueExpr inScope count = (TrueExpr, count)
       | uniquify FalseExpr inScope count = (FalseExpr, count)
       | uniquify (ie as IntExpr(_)) inScope count = (ie, count)
       | uniquify (VarExpr(v)) inScope count = 
           let 
-            (*fun rename (v:string) inScope count = *)
-              (*if #1(#1 (inScope)) = v then
-                #2(#1 (inScope))
-              else if #1(#2 (inScope)) = v then
-                #2(#2 (inScope))
-              else "var_"^Int.toString(count)*)
-              
-                (*val (newVar, newCount, _) = foldl (fn ((old, new), (newVar, nc, isInScope)) => 
-                  if v = old andalso not isInScope then (new, nc, true) 
-                  else if isInScope then (newVar, nc, isInScope) 
-                  else (newVar, nc+1, isInScope)
-                ) 
-                (("var_"^Int.toString(count)), count, false) 
-                (inScope)*)
-                val (newVar, isInScope) = foldl (fn ((old, new), (newVar, iis)) => 
-                  (*if v = old andalso not isInScope then (new, true) else (newVar, isInScope)*)
-                  if v = old andalso not iis then (new, true) 
-                  else (newVar, iis)
-                ) 
-                (("var_"^Int.toString(count)), false) 
-                (inScope)
-              
+            val (newVar, isInScope) = foldl (fn ((old, new), (newVar, iis)) => 
+              if v = old andalso not iis then (new, true) 
+              else (newVar, iis)
+            ) 
+            (("var_"^Int.toString(count)), false) 
+            (inScope)
           in 
-            (*(VarExpr(rename v inScope count), count+1)*)
             (VarExpr(newVar), if isInScope then count else count+1)
           end
       | uniquify (PlusExpr(left, right)) inScope count =
@@ -128,7 +95,6 @@ fun uniquifyVars expr =
             val (leftVal, leftCount) = uniquify left inScope count
             val (rightVal, rightCount) = uniquify right inScope leftCount
           in
-            (*(PlusExpr(leftVal, right), count)*)
             (PlusExpr(leftVal, rightVal), rightCount)
           end
       | uniquify (LessExpr(left, right)) inScope count = 
@@ -155,10 +121,6 @@ fun uniquifyVars expr =
           end
       | uniquify (fe as FunExpr(functionName, parameterName, parameterType, returnType, body)) inScope count = 
           let 
-            (*val currentScopeList = ((functionName, "fun"^"_"^Int.toString(count)), (parameterName, "var"^"_"^Int.toString(count)))*)
-            val funPair = (functionName, "fun"^"_"^Int.toString(count))
-            val paramPair = (parameterName, "var"^"_"^Int.toString(count))
-
             fun isIn _ nil = false
               | isIn (x:string) ((y,_)::ys) = x=y orelse isIn x ys;
 
@@ -169,9 +131,10 @@ fun uniquifyVars expr =
                   else 
                     augmentScope xs (p::currentScope);
 
+            val funPair = (functionName, "fun"^"_"^Int.toString(count))
+            val paramPair = (parameterName, "var"^"_"^Int.toString(count))
             val currentScope = augmentScope inScope [funPair, paramPair]
             val (newBody, bodyCount) = uniquify body currentScope (count+1)
-            (*val (newBody, bodyCount) = uniquify body [funPair, paramPair] (count+1)*)
           in 
             ( FunExpr(
                 #2 funPair,
