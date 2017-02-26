@@ -149,3 +149,99 @@ fun uniquifyVars expr =
   in 
     #1(uniquify expr nil 1)
   end;
+
+
+fun printExpr TrueExpr  = print("true ")
+  | printExpr FalseExpr = print("false ")
+  | printExpr (IntExpr(i)) = print(Int.toString(i)^" ")
+  | printExpr (VarExpr(v)) = print(v)
+  | printExpr (PlusExpr(left, right)) = (printExpr(left); print(" + "); printExpr(right))
+  | printExpr (LessExpr(left, right)) = (printExpr(left); print(" < "); printExpr(right))
+  | printExpr (IfExpr(condition, thenBranch, elseBranch)) = 
+    (
+      print("if ");
+      printExpr(condition); 
+      print(" then \n\t");
+      printExpr(thenBranch);
+      print("\n else \n\t");
+      printExpr(elseBranch)
+    )
+  | printExpr (ApplyExpr(function, argument)) = (printExpr(function); print( "( "); printExpr(argument); print(")"))
+  | printExpr (FunExpr(functionName, parameterName, parameterType, returnType, body)) =
+      (
+        print("\n(fun "^functionName^" ("^parameterName^") = \n\t");
+        printExpr(body);
+        print("\n)\n")
+      );
+
+
+
+
+(*fun f(x) = (x + (fun g (y) = (fun h (za) = h(y)))(g(y) + z)(f(x)));*)
+val t = TrueExpr;
+val f = FalseExpr;
+val i = IntExpr(3);
+val v = VarExpr("variable");
+val p = PlusExpr(VarExpr("a"), VarExpr("b"));
+val l = LessExpr(VarExpr("a"), VarExpr("b"));
+val ifExp = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), PlusExpr(VarExpr("a"), IntExpr(5)), PlusExpr(VarExpr("b"), IntExpr(2)));
+val funExp = FunExpr("f", "a", Int, Int, ifExp);
+
+val f1 = FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x")));
+val f2 = ApplyExpr(FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x"))), IntExpr(5));
+val f3 =  FunExpr(
+            "f", "x", Int, Int, 
+            PlusExpr(
+              VarExpr("x"),   (*false*)
+              ApplyExpr(  (*false*)
+                FunExpr("f", "x", Int, Int,  (*false*)
+                  PlusExpr( (*false orelse true = true*)
+                    ApplyExpr(
+                      FunExpr("f", "z", Int, Int,   (*false*)
+                        ApplyExpr(VarExpr("f"), VarExpr("x"))
+                      ), 
+                      ApplyExpr(VarExpr("f"), VarExpr("x")) (*true*)
+                    ), 
+                    VarExpr("z")) (*false*)
+                ),
+                ApplyExpr(
+                  VarExpr("f"), 
+                  VarExpr("x")
+                )
+              )
+            )
+          );
+
+val f4 = FunExpr(
+          "f", "x", Int, Int, 
+          PlusExpr(
+            VarExpr("x"),
+            VarExpr("y")
+          )
+        );
+val f5 = FunExpr(
+          "f", "z", Int, Int, 
+          PlusExpr(
+            VarExpr("z"),
+            VarExpr("y")
+          )
+        );
+
+val f6 = FunExpr(
+          "f", "x" , Int, Bool, 
+          ApplyExpr(
+            FunExpr(
+              "f", "x", Bool, Bool, 
+              ApplyExpr(VarExpr("f"), VarExpr("x"))
+            ),
+            IntExpr(5)
+          )
+        );
+
+val f7 = FunExpr(
+          "f", "x" , Int, Bool, 
+          ApplyExpr(VarExpr("f"), VarExpr("x"))
+        );
+
+
+
