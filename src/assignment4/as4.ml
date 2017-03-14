@@ -6,33 +6,8 @@
 
 use "as3_with_test.ml";
 
-(*fun tc expr = 
-  let 
-    fun typeExpr TrueExpr _ = SOME Bool
-      | typeExpr FalseExpr _ = SOME Bool
-      | typeExpr (IntExpr(_)) _ = SOME Int
-      | typeExpr (PlusExpr(l, r)) context = 
-          if (typeExpr l context) = SOME Int andalso (typeExpr r context) = SOME Int then
-            SOME Int
-          else 
-            NONE
-      | typeExpr (IfExpr(condition, thenBranch, elseBranch)) context = 
-          if (typeExpr condition context) = SOME(Bool) then
-            let 
-              val typeOfThen = typeExpr thenBranch context
-            in 
-              if typeOfThen = (typeExpr elseBranch context) then
-                typeOfThen
-              else
-                NONE
-            end
-          else
-            NONE
-
-      | typeExpr _ _ = NONE;
-  in 
-    typeExpr expr nil
-  end;*)
+exception Stuck;
+exception NotFinished;
 
 fun tc expr = 
   let 
@@ -71,8 +46,8 @@ fun tc expr =
           )
       | typeExpr (FunExpr(funName, paramName, paramType, returnType, body)) context = 
           let 
-            val funPair = (funName, Arrow(paramType, returnType))
-            val paramPair = (paramName, paramType)
+            val funPair = (funName, Arrow(paramType, returnType));
+            val paramPair = (paramName, paramType);
             val currentContext = funPair::paramPair::context
           in
             case typeExpr body currentContext of
@@ -95,6 +70,80 @@ fun tc expr =
   in 
     typeExpr expr nil
   end;
+
+fun eval expr = 
+  let 
+    fun betaAdd (IntExpr(x)) (IntExpr(y)) = IntExpr(x + y)
+      | betaAdd _ _ = raise Stuck;
+
+    fun betaLess (IntExpr(x)) (IntExpr(y)) = if x < y then TrueExpr else FalseExpr
+      | betaLess _ _ = raise Stuck;
+
+    fun isTypeSafe e = 
+      case tc e of 
+        SOME _ => true
+        | NONE => false
+
+    fun searchRule (t as TrueExpr) = t
+      | searchRule (f as FalseExpr) = f
+      | searchRule (n as (IntExpr(_))) = n
+      | searchRule (pe as (PlusExpr(l, r))) = 
+          let 
+            val rval = if isTypeSafe r then searchRule r else raise Stuck;
+            val lval = if isTypeSafe l then searchRule l else raise Stuck
+          in 
+            betaAdd lval rval
+          end
+      | searchRule (le as LessExpr(l, r)) = 
+          let 
+            val rval = if isTypeSafe r then searchRule r else raise Stuck;
+            val lval = if isTypeSafe l then searchRule r else raise Stuck
+          in 
+            betaLess lval rval
+          end
+      | searchRule _ = raise NotFinished;
+  in
+    searchRule expr
+  end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
