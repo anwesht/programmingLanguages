@@ -4,13 +4,36 @@
  * Name: Anwesh Tuladhar
  *)
 
+(** Import as3 to utilise the definition on DiMLazy datatypes, expressions and sub function. *)
 use "as3.ml";
 
+(** Defined an exception Stuck. Raised when no further steps can be taken 
+    during evaluation of an expression.
+  *)
 exception Stuck;
-exception NotFinished;
 
+(** Type checker for DiMLazy expressions. 
+  * @param expr => the expression to be type checked
+  * @returns => option of datatype typ. The NONE option is returned iff the expression is ill typed.
+  *)
 fun tc expr = 
   let 
+    (** Look for the given variable within the given context 
+      * @param var => the variable to search for
+      * @param contexts => list of pairs of varName and varType in current context.
+      * @returns => option of dataype typ representing the type of var.
+                 => NONE if the variable is not found in the given context.
+      *)
+    fun lookupVar (var:string) nil = NONE
+      | lookupVar var ((varName, varType)::contexts) = 
+          if var = varName then SOME varType else lookupVar var contexts;
+
+    (** Type check the given expression within the context provided.
+      * @param expr => the expression to be type checked.
+      * @param context => the context within which to type check expr. The context is initialised to nil
+          and is augmented by new variables only by the expression FunExpr.
+      * @returns => option of datatype typ. The NONE option is returned iff the expression is ill typed.
+      *)
     fun typeExpr TrueExpr _ = SOME Bool
       | typeExpr FalseExpr _ = SOME Bool
       | typeExpr (IntExpr(_)) _ = SOME Int
@@ -37,13 +60,8 @@ fun tc expr =
           else
             NONE
       | typeExpr (VarExpr(v)) context = 
-          #2 (foldl (fn ((varName, varType), (isSome, optionType)) => 
-              if v = varName andalso not isSome then (true, SOME varType) 
-              else (isSome, optionType)
-            ) 
-            (false, NONE) 
-            (context)
-          )
+          lookupVar v context
+
       | typeExpr (FunExpr(funName, paramName, paramType, returnType, body)) context = 
           let 
             val funPair = (funName, Arrow(paramType, returnType));
@@ -71,27 +89,64 @@ fun tc expr =
     typeExpr expr nil
   end;
 
+(** An interpreter for DiMLazy. The evaluation strategy followed is Call By Name (CBN) and 
+  * evaluation direction is right to left.
+  * @param expr => the expression to be evaluated
+  * @returns => the final value expression.
+  * @throws => Exception Stuck iff the evaluation is ill-typed and hence diverges.
+  *)
 fun eval expr = 
   let 
+    (** Performs the beta addtion step.
+      * @param x => integer value of left IntExpr
+      * @param y => integer value of right IntExpr
+      * @returns => the IntExpr representing the arithmetic sum of x and y
+      *)
     fun betaAdd (IntExpr(x)) (IntExpr(y)) = IntExpr(x + y)
       | betaAdd _ _ = raise Stuck;
-
+    
+    (** Performs the beta less than step.
+      * @param x, y => integer value of left and right IntExpr respectively
+      * @returns => the Bool expr representing the result of x < y
+      *)
     fun betaLess (IntExpr(x)) (IntExpr(y)) = if x < y then TrueExpr else FalseExpr
       | betaLess _ _ = raise Stuck;
 
+    (** Performs the beta step of if-then-else expression.
+      * @param bool => Bool expr after evaluating the condition of the if-then-else expr
+      * @returns => the thenBranch expr if bool is TrueExpr
+                 => the elseBranch expr if bool is False Expr
+      * @throws => Stuck otherwise
+      *)
     fun betaIfThenElse TrueExpr thenBranch _ = thenBranch
       | betaIfThenElse FalseExpr _ elseBranch = elseBranch
       | betaIfThenElse _ _ _ = raise Stuck;
 
+    (** Performs the beta step of apply expression.
+      * @param f => The FunExpr to be applied
+      * @param arg => The argument supplied to FunExpr
+      * @returns => The expression body of FunExpr after applying capture avoiding substitution:
+          [arg/paramName, f/funName]body
+      *)
     fun betaApply (f as FunExpr(funName, paramName, paramType, returnType, body)) arg = 
           (sub arg paramName (sub f funName body) )
       | betaApply _ _ = raise Stuck;
 
+    (** Performs type check for the given expression.
+      * @param e=> The expression to type check
+      * @returns => true if e is well-typed
+                 => false otherwise
+      *)
     fun isTypeSafe e = 
       case tc e of 
         SOME _ => true
         | NONE => false;
 
+    (** Performs the search steps when evaluating the expressions
+      * @param expr => The current expression to be evaluated
+      * @returns => The result of evaluating the expression.
+      * @throws => Exception Stuck iff the evaluation is ill-typed and hence diverges.
+      *)
     fun searchRule (t as TrueExpr) = t
       | searchRule (f as FalseExpr) = f
       | searchRule (n as IntExpr(_)) = n
@@ -146,7 +201,7 @@ val applyFunExp1 = ApplyExpr(funExp, IntExpr(3));
 val applyFunExp2 = ApplyExpr(funExp, IntExpr(7));
 val funExp1 = FunExpr("f", "unused", Int, Int, ifSimple);
 val funExp2 = FunExpr("f", "a", Int, Int, ifBad);   (*Evaluates even if not typesafe as condition always true.*)
-val ifForFun = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), VarExpr("a"), IntExpr(5));
+val ifForFun = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), VarExpr("a"), IntExpr(5));  (*returns 5 or less*)
 val funExp3 = FunExpr("f", "a", Int, Int, ifForFun);
 val applyFunExp3 = ApplyExpr(funExp3, IntExpr(99));
 val applyFunExp3_1 = ApplyExpr(funExp3, IntExpr(2));
@@ -177,6 +232,9 @@ val applySum = ApplyExpr(sum, IntExpr(10)); (*Sum = 55*)
 
 val sumOf10 = FunExpr("f", "unused", Int, Int, applySum);
 val applyUnusedBadArg = ApplyExpr(sumOf10, LessExpr(TrueExpr, FalseExpr));    (*Shows Call By Name evaluation strategy*)
+
+val cbnEval = PlusExpr(VarExpr("bad"), ApplyExpr(sum, IntExpr(10))); (*Can be verified by using print*)
+(*val applyCBN = ApplyExpr(cbnEval, VarExpr("BAD"));*)
 
 
 val f2 = ApplyExpr(FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x"))), IntExpr(5));   (*Infinite loop*)
