@@ -156,7 +156,7 @@ fun eval expr =
       | searchRule (f as FalseExpr) = f
       | searchRule (n as IntExpr(_)) = n
       | searchRule (func as FunExpr(_,_,_,_,_)) = func
-      | searchRule (v as VarExpr(_)) = raise Stuck
+      | searchRule (v as VarExpr(_)) = raise Stuck  (* Variable is not considered a value. *)
       | searchRule (pe as PlusExpr(l, r)) = 
           let 
             val rval = searchRule r;
@@ -184,7 +184,6 @@ fun eval expr =
           in
             if isTypeSafe newExpr then searchRule newExpr else raise Stuck
           end
-      (*| searchRule _ = raise NotFinished;*)
   in
     searchRule expr
   end;
