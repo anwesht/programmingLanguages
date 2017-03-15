@@ -4,7 +4,7 @@
  * Name: Anwesh Tuladhar
  *)
 
-use "as3_with_test.ml";
+use "as3.ml";
 
 exception Stuck;
 exception NotFinished;
@@ -71,63 +71,6 @@ fun tc expr =
     typeExpr expr nil
   end;
 
-(*fun eval expr = 
-  let 
-    fun betaAdd (IntExpr(x)) (IntExpr(y)) = IntExpr(x + y)
-      | betaAdd _ _ = raise Stuck;
-
-    fun betaLess (IntExpr(x)) (IntExpr(y)) = if x < y then TrueExpr else FalseExpr
-      | betaLess _ _ = raise Stuck;
-
-    fun betaIfThenElse TrueExpr thenBranch _ = thenBranch
-      | betaIfThenElse FalseExpr _ elseBranch = elseBranch
-      | betaIfThenElse _ _ _ = raise Stuck;
-
-    fun betaApply (f as FunExpr(funName, paramName, paramType, returnType, body)) expr = 
-          ((sub f paramName body) handle 
-            Capture => raise Stuck)
-      | betaApply _ _ = raise Stuck;
-
-    fun isTypeSafe e = 
-      case tc e of 
-        SOME _ => true
-        | NONE => false;
-
-    fun searchRule (t as TrueExpr) = t
-      | searchRule (f as FalseExpr) = f
-      | searchRule (n as IntExpr(_)) = n
-      | searchRule (func as FunExpr(_,_,_,_,_)) = func
-      | searchRule (v as VarExpr(_)) = raise Stuck
-      | searchRule (pe as PlusExpr(l, r)) = 
-          let 
-            val rval = if isTypeSafe r then searchRule r else raise Stuck;
-            val lval = if isTypeSafe l then searchRule l else raise Stuck
-          in 
-            betaAdd lval rval
-          end
-      | searchRule (le as LessExpr(l, r)) = 
-          let 
-            val rval = if isTypeSafe r then searchRule r else raise Stuck;
-            val lval = if isTypeSafe l then searchRule r else raise Stuck
-          in 
-            betaLess lval rval
-          end
-      | searchRule (ie as IfExpr(condition, thenBranch, elseBranch)) = 
-          let
-            val condBool = if isTypeSafe condition then searchRule condition else raise Stuck
-          in
-            searchRule (betaIfThenElse condBool thenBranch elseBranch)
-          end
-      | searchRule (ae as ApplyExpr(func, arg)) = 
-          let 
-            val newExpr = if isTypeSafe func then betaApply func arg else raise Stuck
-          in
-            searchRule newExpr
-          end
-  in
-    searchRule expr
-  end;*)
-
 fun eval expr = 
   let 
     fun betaAdd (IntExpr(x)) (IntExpr(y)) = IntExpr(x + y)
@@ -141,10 +84,7 @@ fun eval expr =
       | betaIfThenElse _ _ _ = raise Stuck;
 
     fun betaApply (f as FunExpr(funName, paramName, paramType, returnType, body)) arg = 
-         (* ((sub f paramName body) handle 
-            Capture => raise Stuck)*)
           (sub arg paramName (sub f funName body) )
-            (*handle Capture => raise Stuck)*)
       | betaApply _ _ = raise Stuck;
 
     fun isTypeSafe e = 
@@ -180,7 +120,6 @@ fun eval expr =
       | searchRule (ae as ApplyExpr(func, arg)) = 
           let 
             val newExpr = betaApply func arg
-            (*val newExpr = if isTypeSafe func then betaApply func arg else raise Stuck*)
           in
             if isTypeSafe newExpr then searchRule newExpr else raise Stuck
           end
@@ -189,6 +128,114 @@ fun eval expr =
   end;
 
 
+val t = TrueExpr;
+val f = FalseExpr;
+val i = IntExpr(3);
+val v = VarExpr("variable");
+val p = PlusExpr(VarExpr("a"), VarExpr("b"));
+val p1 = PlusExpr(IntExpr(3), IntExpr(4));
+val l = LessExpr(VarExpr("a"), VarExpr("b"));
+val l1 = LessExpr(IntExpr(3), IntExpr(4));
+val ifSimple = IfExpr(TrueExpr, IntExpr(2), IntExpr(3));
+val ifBad = IfExpr(TrueExpr, IntExpr(2), TrueExpr);
+val ifBad1 = IfExpr(IntExpr(1), TrueExpr, FalseExpr);
+val ifExp = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), 
+  PlusExpr(VarExpr("a"), IntExpr(10)), PlusExpr(IntExpr(5), IntExpr(10)));
+val funExp = FunExpr("f", "a", Int, Int, ifExp);
+val applyFunExp1 = ApplyExpr(funExp, IntExpr(3));
+val applyFunExp2 = ApplyExpr(funExp, IntExpr(7));
+val funExp1 = FunExpr("f", "unused", Int, Int, ifSimple);
+val funExp2 = FunExpr("f", "a", Int, Int, ifBad);   (*Evaluates even if not typesafe as condition always true.*)
+val ifForFun = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), VarExpr("a"), IntExpr(5));
+val funExp3 = FunExpr("f", "a", Int, Int, ifForFun);
+val applyFunExp3 = ApplyExpr(funExp3, IntExpr(99));
+val applyFunExp3_1 = ApplyExpr(funExp3, IntExpr(2));
+val funIdentity = FunExpr("f", "a", Int, Int, VarExpr("a"));
+val applyIdentity1 = ApplyExpr(funIdentity, funExp3);
+val applyIdentity2 = ApplyExpr(funIdentity, TrueExpr);
+
+val sumBody = IfExpr(
+  LessExpr(
+    VarExpr("x"),
+    IntExpr(2)
+  ), 
+  IntExpr(1), 
+  PlusExpr(
+    VarExpr("x"),
+    ApplyExpr(
+      VarExpr("sum"),
+      PlusExpr(
+        VarExpr("x"),
+        IntExpr(~1)
+      )
+    )
+  )
+)
+
+val sum = FunExpr("sum", "x", Int, Int, sumBody);
+val applySum = ApplyExpr(sum, IntExpr(10)); (*Sum = 55*)
+
+val sumOf10 = FunExpr("f", "unused", Int, Int, applySum);
+val applyUnusedBadArg = ApplyExpr(sumOf10, LessExpr(TrueExpr, FalseExpr));    (*Shows Call By Name evaluation strategy*)
+
+
+val f2 = ApplyExpr(FunExpr("loop", "x", Int, Int, ApplyExpr(VarExpr("loop"), VarExpr("x"))), IntExpr(5));   (*Infinite loop*)
+val f3 =  FunExpr(
+            "f", "x", Int, Int, 
+            PlusExpr(
+              VarExpr("x"),   (*false*)
+              ApplyExpr(  (*false*)
+                FunExpr("f", "x", Int, Int,  (*false*)
+                  PlusExpr( (*false orelse true = true*)
+                    ApplyExpr(
+                      FunExpr("f", "z", Int, Int,   (*false*)
+                        ApplyExpr(VarExpr("f"), VarExpr("x"))
+                      ), 
+                      ApplyExpr(VarExpr("f"), VarExpr("x")) (*true*)
+                    ), 
+                    (*VarExpr("z"))*) (*Free variable = ill typed.*)
+                    IntExpr(99)) (*Free variable = ill typed.*)
+                ),
+                ApplyExpr(
+                  VarExpr("f"), 
+                  VarExpr("x")
+                )
+              )
+            )
+          );
+
+val applyF3 = ApplyExpr(f3, IntExpr(3)); (*Stuck as free variable = ill typed*)
+
+val f4 = FunExpr(
+          "f", "x", Int, Int, 
+          PlusExpr(
+            VarExpr("x"),
+            VarExpr("y")
+          )
+        );
+val f5 = FunExpr(
+          "f", "z", Int, Int, 
+          PlusExpr(
+            VarExpr("z"),
+            VarExpr("y")
+          )
+        );
+
+val f6 = FunExpr(
+          "f", "x" , Int, Bool, 
+          ApplyExpr(
+            FunExpr(
+              "f", "x", Bool, Bool, 
+              ApplyExpr(VarExpr("f"), VarExpr("x"))
+            ),
+            IntExpr(5)
+          )
+        );
+
+val f7 = FunExpr(
+          "f", "x" , Int, Bool, 
+          ApplyExpr(VarExpr("f"), VarExpr("x"))
+        );
 
 
 
