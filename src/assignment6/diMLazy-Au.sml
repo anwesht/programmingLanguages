@@ -156,8 +156,39 @@ val t1 = UnitExpr;
 val t2 = PairExpr(IntExpr(1), PairExpr(IntExpr(2), IntExpr(3)));
 val t3 = FstExpr(t2);
 val t4 = SndExpr(t2);
-val t5 = SumExpr(Left, 
+val t5 = SumExpr(Right, 
             PairExpr(IntExpr(5), IntExpr(6)),
-            Sum(Int, Int));
-val t6 = CaseExpr(t5, "x", TrueExpr, "y", FalseExpr);
+            Sum(Int, Prod(Int, Int)));
+val t6 = SumExpr(Left, 
+            IntExpr(5),
+            Sum(Int, Bool));
+val t7 = SumExpr(Right, 
+            IntExpr(5),
+            Sum(Int, Bool));
+val t8 = CaseExpr(t5, "x", TrueExpr, "y", FalseExpr);
+val t9 = CaseExpr(t5,
+                  "z1",
+                  IntExpr(88),
+                  "z2",
+                  SndExpr(VarExpr("z2"))
+                 );
+val t10 = SumExpr(Right, 
+            PairExpr(IntExpr(5), IntExpr(6)),
+            Sum(Int, Bool));
+
+val tRoll = RollExpr(
+              SumExpr(
+                Right, 
+                PairExpr(
+                  FstExpr(VarExpr("nonempty")),
+                  SndExpr(VarExpr("Ls"))),
+                uType)
+              );
+
+val funVar = FunExpr("f", 
+  "x",
+  Prod(Int, Var("t")),
+  Int, 
+  IntExpr(4));
+
 

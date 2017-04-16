@@ -13,17 +13,6 @@ use "diMLazy-Au.sml";
   *)
 fun tc expr = 
   let 
-    (*fun subT tVar rType Bool = Bool
-      | subT tVar rType Int = Int
-      | subT tVar rType (vType as Var(_)) = vType
-      | subT tVar rType (Arrow(argType, returnType)) = 
-          Arrow((sub tVar rType argType), (sub tVar rType returnType))
-      | subT tVar rType (Prod(t1, t2)) = 
-          Prod((sub tVar rType t1), (sub tVar rType t2))
-      | subT tVar rType (Sum(t1, t2)) = 
-          Sum((sub tVar rType t1), (sub tVar rType t2))
-      | subT tVar rType (recType as Rec(t, tBody)) = recType;*)
-
     fun unroll rType Bool = Bool
       | unroll rType Int = Int
       | unroll rType Unit = Unit
@@ -52,13 +41,6 @@ fun tc expr =
             tVar
           else 
             Rec(t, (subT tVar eType tBody));
-          (*(
-            case unroll recType tBody of 
-              eType => tVar
-              | _ => 
-                  Rec(t, (subT tVar eType tBody))
-          )*)
-
 
     (** Look for the given variable within the given context 
       * @param var => the variable to search for
@@ -136,7 +118,6 @@ fun tc expr =
             in
               case typeExpr body currentContext of
                 SOME(t) => 
-                  (*if t = returnType then*)
                   if t = returnType then
                     SOME(#2(funPair))
                   else 
@@ -174,8 +155,8 @@ fun tc expr =
       | typeExpr (FstExpr(pair)) context = 
           (
             case typeExpr pair context of 
-            SOME(Prod(fst, _)) => SOME(fst)
-            | _ => NONE
+              SOME(Prod(fst, _)) => SOME(fst)
+              | _ => NONE
           )
       | typeExpr (SndExpr(pair)) context =
           (
@@ -183,28 +164,54 @@ fun tc expr =
               SOME(Prod(_, snd)) => SOME(snd)
               | _ => NONE
           )
-      | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
+     (* | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
+          if isValidType l andalso isValidType r then
+            let 
+              val (lt, rt) = case typeExpr e context of 
+                SOME(Prod(t1, t2)) => (SOME t1, SOME t2)
+                | _ => (NONE, NONE)
+            in
+              case side of 
+                    Left => 
+                      if lt = SOME l then SOME(t)
+                      else NONE
+                    | Right =>
+                      if rt = SOME r then SOME(t)
+                      else NONE
+            end
+          else NONE*)
+       | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
           if isValidType l andalso isValidType r then
             let 
               val eType = typeExpr e context
             in
               case side of 
                     Left => 
-                      (
-                        case eType of 
-                          SOME(l) => SOME(t)
-                          | _ => NONE
-                      )
+                      if eType = SOME l then SOME(t)
+                      else NONE
                     | Right =>
-                      (
-                        case eType of
-                          SOME(r) => SOME(t)
-                          | _ => NONE
-                      )
+                      if eType = SOME r then SOME(t)
+                      else NONE
             end
           else NONE
 
       | typeExpr (CaseExpr(e, x, e1, y, e2)) context =
+          (case typeExpr e context of
+              SOME(Sum(l, r)) => 
+                let 
+                  val e1Context = (x, l)::context
+                  val e2Context = (y, r)::context
+                  val e1Type = typeExpr e1 e1Context
+                  val e2Type = typeExpr e2 e2Context
+                in(
+                    print("CASE EXPR:");
+                  if e1Type = e2Type then e1Type 
+                  else (print("case else none"); NONE)
+                    )
+                end
+              | _ => (print("case none"); NONE)
+          )
+      (*| typeExpr (CaseExpr(e, x, e1, y, e2)) context =
           (case typeExpr e context of
               SOME(Sum(l, r)) => 
                 let 
@@ -223,15 +230,13 @@ fun tc expr =
                     | NONE => NONE
                 end
               | _ => NONE
-          )
-
+          )*)
       | typeExpr (RollExpr(e)) context = 
           let 
             val eType = typeExpr e context
           in 
             case eType of
               SOME(et) =>
-                (*SOME(subT (Var("t")) et et)*)
                 SOME(Rec("t", subT (Var("t")) et et))
               | NONE => NONE
           end
@@ -247,8 +252,6 @@ fun tc expr =
           end
 
       | typeExpr other _ = NONE
-
-   
   in 
     typeExpr expr nil
   end;
