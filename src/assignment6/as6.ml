@@ -35,7 +35,7 @@ fun tc expr =
       | unroll rType (Sum(t1, t2)) = 
           Sum((unroll rType t1), (unroll rType t2))
 (*todo: check case for recursive type. Should be ok if maximally rolled.*)
-      | unroll _ (recType as Rec(_, tBody)) = tBody;
+      | unroll rType (recType as Rec(t, tBody)) = tBody;
 
     fun subT tVar eType Bool = Bool
       | subT tVar eType Int = Int
@@ -204,14 +204,20 @@ fun tc expr =
           in 
             case eType of
               SOME(et) =>
-                SOME(subT (Var("t")) et et)
+                (*SOME(subT (Var("t")) et et)*)
+                SOME(Rec("t", subT (Var("t")) et et))
               | NONE => NONE
           end
-          (*case eType of
-              SOME(rType as Rec(tVar, tType)) => rType
-              | SOME(t) =>
-                  SOME(Rec(Var("t"), (subT Var("t") eType eType)))
-              | NONE => NONE*)
+      | typeExpr (UnrollExpr(e)) context = 
+          let 
+            val eType = typeExpr e context
+          in
+            case eType of 
+              SOME(rType as Rec(t, tBody)) =>
+                SOME(unroll rType tBody)
+              | _ => (print("HEREEE\n\n");
+                NONE)
+          end
 
       | typeExpr other _ = NONE
   in 
