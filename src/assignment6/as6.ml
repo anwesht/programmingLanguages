@@ -70,6 +70,29 @@ fun tc expr =
       | lookupVar var ((varName, varType)::contexts) = 
           if var = varName then SOME varType else lookupVar var contexts;
 
+    fun lookupTypeVar (var:string) nil = false
+      | lookupTypeVar var (varName::typeContexts) = 
+          if var = varName then true else lookupTypeVar var typeContexts;
+
+    fun isValidType t = 
+      let
+        fun isValid Bool _ = true
+          | isValid Int _ = true
+          | isValid Unit _ = true
+          | isValid (Arrow(argType, returnType)) typeContext = 
+            (isValid argType typeContext) andalso (isValid returnType typeContext)
+          | isValid (Prod(t1, t2)) typeContext = 
+            (isValid t1 typeContext) andalso (isValid t2 typeContext)
+          | isValid (Sum(t1, t2)) typeContext = 
+            (isValid t1 typeContext) andalso (isValid t2 typeContext)
+          | isValid (Var(t)) typeContext = 
+            lookupTypeVar t typeContext
+          | isValid (Rec(t, tType)) typeContext =
+            isValid tType (t::typeContext)
+      in
+        isValid t nil
+      end;
+    
     (** Type check the given expression within the context provided.
       * @param expr => the expression to be type checked.
       * @param context => the context within which to type check expr. The context is initialised to nil
@@ -105,28 +128,31 @@ fun tc expr =
           lookupVar v context
 
       | typeExpr (FunExpr(funName, paramName, paramType, returnType, body)) context = 
-          let 
-            val funPair = (funName, Arrow(paramType, returnType));
-            val paramPair = (paramName, paramType);
-            val currentContext = funPair::paramPair::context
-          in
-            case typeExpr body currentContext of
-              SOME(t) => 
-                if t = returnType then
-                  SOME(#2(funPair))
-                else 
-                  NONE
-              | NONE => NONE 
-          end
+          if isValidType paramType andalso isValidType returnType then
+            let 
+              val funPair = (funName, Arrow(paramType, returnType));
+              val paramPair = (paramName, paramType);
+              val currentContext = funPair::paramPair::context
+            in
+              case typeExpr body currentContext of
+                SOME(t) => 
+                  (*if t = returnType then*)
+                  if t = returnType then
+                    SOME(#2(funPair))
+                  else 
+                    NONE
+                | NONE => NONE 
+            end
+          else NONE
       | typeExpr (ApplyExpr(func, arg)) context = 
           (
             case typeExpr func context of
-            SOME(Arrow(paramType, returnType)) =>
-              if (typeExpr arg context) = SOME(paramType) then
-                SOME returnType
-              else NONE
-            | SOME(_) => NONE 
-            | NONE => NONE
+              SOME(Arrow(paramType, returnType)) =>
+                if (typeExpr arg context) = SOME(paramType) then
+                  SOME returnType
+                else NONE
+              | SOME(_) => NONE 
+              | NONE => NONE
           )
 
       | typeExpr UnitExpr _ = SOME Unit
@@ -158,25 +184,26 @@ fun tc expr =
               | _ => NONE
           )
       | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
-          let 
-            val eType = typeExpr e context
-          in
-            (
+          if isValidType l andalso isValidType r then
+            let 
+              val eType = typeExpr e context
+            in
               case side of 
-                Left => 
-                  (
-                    case eType of 
-                      SOME(l) => SOME(t)
-                      | _ => NONE
-                  )
-                | Right =>
-                  (
-                    case eType of
-                      SOME(r) => SOME(t)
-                      | _ => NONE
-                  )
-            )
-          end
+                    Left => 
+                      (
+                        case eType of 
+                          SOME(l) => SOME(t)
+                          | _ => NONE
+                      )
+                    | Right =>
+                      (
+                        case eType of
+                          SOME(r) => SOME(t)
+                          | _ => NONE
+                      )
+            end
+          else NONE
+
       | typeExpr (CaseExpr(e, x, e1, y, e2)) context =
           (case typeExpr e context of
               SOME(Sum(l, r)) => 
@@ -220,6 +247,8 @@ fun tc expr =
           end
 
       | typeExpr other _ = NONE
+
+   
   in 
     typeExpr expr nil
   end;
