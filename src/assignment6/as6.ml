@@ -13,6 +13,53 @@ use "diMLazy-Au.sml";
   *)
 fun tc expr = 
   let 
+    (*fun subT tVar rType Bool = Bool
+      | subT tVar rType Int = Int
+      | subT tVar rType (vType as Var(_)) = vType
+      | subT tVar rType (Arrow(argType, returnType)) = 
+          Arrow((sub tVar rType argType), (sub tVar rType returnType))
+      | subT tVar rType (Prod(t1, t2)) = 
+          Prod((sub tVar rType t1), (sub tVar rType t2))
+      | subT tVar rType (Sum(t1, t2)) = 
+          Sum((sub tVar rType t1), (sub tVar rType t2))
+      | subT tVar rType (recType as Rec(t, tBody)) = recType;*)
+
+    fun unroll rType Bool = Bool
+      | unroll rType Int = Int
+      | unroll rType Unit = Unit
+      | unroll rType (vType as Var(t)) = rType
+      | unroll rType (Arrow(argType, returnType)) = 
+          Arrow((unroll rType argType), (unroll rType returnType))
+      | unroll rType (Prod(t1, t2)) = 
+          Prod((unroll rType t1), (unroll rType t2))
+      | unroll rType (Sum(t1, t2)) = 
+          Sum((unroll rType t1), (unroll rType t2))
+(*todo: check case for recursive type. Should be ok if maximally rolled.*)
+      | unroll _ (recType as Rec(_, tBody)) = tBody;
+
+    fun subT tVar eType Bool = Bool
+      | subT tVar eType Int = Int
+      | subT _ _ Unit = Unit
+      | subT tVar eType (vType as Var(_)) = vType
+      | subT tVar eType (Arrow(argType, returnType)) = 
+          Arrow((subT tVar eType argType), (subT tVar eType returnType))
+      | subT tVar eType (Prod(t1, t2)) = 
+          Prod((subT tVar eType t1), (subT tVar eType t2))
+      | subT tVar eType (Sum(t1, t2)) = 
+          Sum((subT tVar eType t1), (subT tVar eType t2))
+      | subT tVar eType (recType as Rec(t, tBody)) = 
+          if eType = (unroll recType tBody) then
+            tVar
+          else 
+            Rec(t, (subT tVar eType tBody));
+          (*(
+            case unroll recType tBody of 
+              eType => tVar
+              | _ => 
+                  Rec(t, (subT tVar eType tBody))
+          )*)
+
+
     (** Look for the given variable within the given context 
       * @param var => the variable to search for
       * @param contexts => list of pairs of varName and varType in current context.
@@ -107,8 +154,8 @@ fun tc expr =
       | typeExpr (SndExpr(pair)) context =
           (
             case typeExpr pair context of
-            SOME(Prod(_, snd)) => SOME(snd)
-            | _ => NONE
+              SOME(Prod(_, snd)) => SOME(snd)
+              | _ => NONE
           )
       | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
           let 
@@ -150,6 +197,22 @@ fun tc expr =
                 end
               | _ => NONE
           )
+
+      | typeExpr (RollExpr(e)) context = 
+          let 
+            val eType = typeExpr e context
+          in 
+            case eType of
+              SOME(et) =>
+                SOME(subT (Var("t")) et et)
+              | NONE => NONE
+          end
+          (*case eType of
+              SOME(rType as Rec(tVar, tType)) => rType
+              | SOME(t) =>
+                  SOME(Rec(Var("t"), (subT Var("t") eType eType)))
+              | NONE => NONE*)
+
       | typeExpr other _ = NONE
   in 
     typeExpr expr nil
