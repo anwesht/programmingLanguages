@@ -164,22 +164,6 @@ fun tc expr =
               SOME(Prod(_, snd)) => SOME(snd)
               | _ => NONE
           )
-     (* | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
-          if isValidType l andalso isValidType r then
-            let 
-              val (lt, rt) = case typeExpr e context of 
-                SOME(Prod(t1, t2)) => (SOME t1, SOME t2)
-                | _ => (NONE, NONE)
-            in
-              case side of 
-                    Left => 
-                      if lt = SOME l then SOME(t)
-                      else NONE
-                    | Right =>
-                      if rt = SOME r then SOME(t)
-                      else NONE
-            end
-          else NONE*)
        | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
           if isValidType l andalso isValidType r then
             let 
@@ -203,34 +187,12 @@ fun tc expr =
                   val e2Context = (y, r)::context
                   val e1Type = typeExpr e1 e1Context
                   val e2Type = typeExpr e2 e2Context
-                in(
-                    print("CASE EXPR:");
-                  if e1Type = e2Type then e1Type 
-                  else (print("case else none"); NONE)
-                    )
-                end
-              | _ => (print("case none"); NONE)
-          )
-      (*| typeExpr (CaseExpr(e, x, e1, y, e2)) context =
-          (case typeExpr e context of
-              SOME(Sum(l, r)) => 
-                let 
-                  val e1Context = (x, l)::context
-                  val e2Context = (y, r)::context
-                  val e1Type = typeExpr e1 e1Context
-                  val e2Type = typeExpr e2 e2Context
                 in
-                  case e2Type of
-                    SOME(t2) => 
-                      (
-                        case e1Type of 
-                        SOME(t1) => if t1 = t2 then SOME(t1) else NONE
-                        | NONE => NONE
-                      )
-                    | NONE => NONE
+                  if e1Type = e2Type then e1Type 
+                  else NONE
                 end
               | _ => NONE
-          )*)
+          )
       | typeExpr (RollExpr(e)) context = 
           let 
             val eType = typeExpr e context
@@ -247,14 +209,20 @@ fun tc expr =
             case eType of 
               SOME(rType as Rec(t, tBody)) =>
                 SOME(unroll rType tBody)
-              | _ => (print("HEREEE\n\n");
-                NONE)
+              | _ => NONE
           end
 
       | typeExpr other _ = NONE
   in 
     typeExpr expr nil
   end;
+
+fun isVal TrueExpr = true
+  | isVal FalseExpr = true
+  | isVal (IntExpr(_)) = true
+  | isVal (FunExpr(_,_,_,_,_)) = true
+  | isVal UnitExpr = true
+  | isVal _ = false;
 
 
 
@@ -378,42 +346,3 @@ val f7 = FunExpr(
           "f", "x" , Int, Bool, 
           ApplyExpr(VarExpr("f"), VarExpr("x"))
         );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
