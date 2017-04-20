@@ -199,6 +199,68 @@ val e2_f = fill (#1 e2_d) (#2 e2_d);
 e2_f = e2;
 
 
+test bigStep "bigStep e5" e5 (RollExpr
+    (SumExpr
+       (Right,
+        PairExpr
+          (IntExpr 2,
+           RollExpr
+             (SumExpr
+                (Right,
+                 PairExpr
+                   (IntExpr 3,
+                    RollExpr
+                      (SumExpr
+                         (Right,
+                          PairExpr
+                            (IntExpr 4,
+                             RollExpr
+                               (SumExpr
+                                  (Left,UnitExpr,
+                                   Sum
+                                     (Unit,
+                                      Prod
+                                        (Int,
+                                         Rec
+                                           ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+                          Sum
+                            (Unit,
+                             Prod
+                               (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+                 Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+        Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))));
+
+test bigStep "bigStep e6" e6 (RollExpr
+    (SumExpr
+       (Right,
+        PairExpr
+          (IntExpr 4,
+           RollExpr
+             (SumExpr
+                (Right,
+                 PairExpr
+                   (IntExpr 3,
+                    RollExpr
+                      (SumExpr
+                         (Right,
+                          PairExpr
+                            (IntExpr 2,
+                             RollExpr
+                               (SumExpr
+                                  (Left,UnitExpr,
+                                   Sum
+                                     (Unit,
+                                      Prod
+                                        (Int,
+                                         Rec
+                                           ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+                          Sum
+                            (Unit,
+                             Prod
+                               (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+                 Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+        Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))));
+
 
 
 

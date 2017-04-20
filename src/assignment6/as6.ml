@@ -335,6 +335,7 @@ fun beta e =
   let
     fun sub (e:expr) x TrueExpr = TrueExpr
       | sub e x FalseExpr = FalseExpr
+      | sub e x UnitExpr = UnitExpr
       | sub e x (ie as IntExpr(_)) = ie
       | sub e x (ve as VarExpr(v)) = if x=v then e else ve
       | sub e x (PlusExpr(left, right)) = PlusExpr((sub e x left), (sub e x right))
