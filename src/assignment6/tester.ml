@@ -14,7 +14,6 @@ fun test func id expr expected =
     print (id^" Success!!! :) \n")
   else print ("______________\n"^id^" Failure! :( \n______________\n") ;
 
-
 val t1 = UnitExpr;
 val t2 = PairExpr(IntExpr(1), PairExpr(IntExpr(2), IntExpr(3)));
 val t3 = FstExpr(t2);
@@ -119,6 +118,35 @@ val lt1 = LessExpr(IntExpr(3), IntExpr(4));
 val lt2 = LessExpr(ite_int, IntExpr(4));
 val lt3 = LessExpr(IntExpr(3), ite_int);
 
+val ite1 = IfExpr (TrueExpr,IntExpr 4,IntExpr 5);
+val ite2 = IfExpr (lt1,IntExpr 4,IntExpr 5);
+val ite3 = IfExpr (lt2,IntExpr 4,IntExpr 5);
+val ite4 = IfExpr (lt3,IntExpr 4,IntExpr 5);
+
+val var = VarExpr("x");
+
+val sumBody = IfExpr(
+  LessExpr(
+    VarExpr("x"),
+    IntExpr(2)
+  ), 
+  IntExpr(1), 
+  PlusExpr(
+    VarExpr("x"),
+    ApplyExpr(
+      VarExpr("sum"),
+      PlusExpr(
+        VarExpr("x"),
+        IntExpr(~1)
+      )
+    )
+  )
+)
+
+val sum = FunExpr("sum", "x", Int, Int, sumBody);
+val applySum = ApplyExpr(sum, IntExpr(10)); (*Sum = 55*)
+val ifApplySum = IfExpr (lt1,sum,sum);
+
 test decompose "pe1" pe1 (Hole, pe1);
 test decompose "pe2" pe2 (PlusCtxt2 (Hole,4), ite_int);
 test decompose "pe3" pe3 (PlusCtxt1 (IntExpr 3,Hole), ite_int);
@@ -127,10 +155,48 @@ test decompose "lt1" lt1 (Hole, lt1);
 test decompose "lt2" lt2 (LessCtxt2 (Hole,4), ite_int);
 test decompose "lt3" lt3 (LessCtxt1 (IntExpr 3,Hole), ite_int);
 
+test decompose "ite1" ite1 (Hole, ite1);
+test decompose "ite2" ite2 (IfCtxt (Hole,IntExpr 4,IntExpr 5),lt1);
+test decompose "ite3" ite3 (IfCtxt (LessCtxt2 (Hole,4),IntExpr 4,IntExpr 5), ite_int);
+test decompose "ite4" ite4 (IfCtxt (LessCtxt1 (IntExpr 3,Hole),IntExpr 4,IntExpr 5), ite_int);
+
+(*test decompose "sum" sum ("Stuck as function is a value");*)
+test decompose "applySum" applySum (Hole,
+   ApplyExpr
+     (FunExpr
+        ("sum","x",Int,Int,
+         IfExpr
+           (LessExpr (VarExpr "x",IntExpr 2),IntExpr 1,
+            PlusExpr
+              (VarExpr "x",
+               ApplyExpr (VarExpr "sum",PlusExpr (VarExpr "x",IntExpr ~1))))),
+      IntExpr 10));
+
+test decompose "ifApplySum" ifApplySum (IfCtxt
+     (Hole,
+      FunExpr
+        ("sum","x",Int,Int,
+         IfExpr
+           (LessExpr (VarExpr "x",IntExpr 2),IntExpr 1,
+            PlusExpr
+              (VarExpr "x",
+               ApplyExpr (VarExpr "sum",PlusExpr (VarExpr "x",IntExpr ~1))))),
+      FunExpr
+        ("sum","x",Int,Int,
+         IfExpr
+           (LessExpr (VarExpr "x",IntExpr 2),IntExpr 1,
+            PlusExpr
+              (VarExpr "x",
+               ApplyExpr (VarExpr "sum",PlusExpr (VarExpr "x",IntExpr ~1)))))),
+   LessExpr (IntExpr 3,IntExpr 4));
+
+
 test decompose "e2" e2 (SumCtxt (Right,PairCtxt2 (Hole,IntExpr 6),Sum (Unit,Prod (Int,Int))),
                         ite_int) ;
 
-
+val e2_d = decompose e2;
+val e2_f = fill (#1 e2_d) (#2 e2_d);
+e2_f = e2;
 
 
 

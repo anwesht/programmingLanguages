@@ -234,134 +234,99 @@ fun decompose e =
       | dig (VarExpr(_)) = raise Stuck
       | dig (FunExpr(_,_,_,_,_)) = raise Stuck
       | dig (SumExpr(Left, e, t)) = 
-          let 
-            val (ctxt, betaE) = dig e
-          in 
-            (SumCtxt(Left, ctxt, t), betaE)
+          let val (ctxt, betaE) = dig e
+          in (SumCtxt(Left, ctxt, t), betaE)
           end
       | dig (SumExpr(Right, e, t)) = 
-          let 
-            val (ctxt, betaE) = dig e
-          in 
-            (SumCtxt(Right, ctxt, t), betaE)
+          let val (ctxt, betaE) = dig e
+          in (SumCtxt(Right, ctxt, t), betaE)
           end
       | dig (PairExpr(e1, e2)) = 
           if isVal e2 then
-            let 
-              val (ctxt, betaE) = dig e1
-            in 
-              (PairCtxt2(ctxt, e2), betaE)
+            let val (ctxt, betaE) = dig e1
+            in (PairCtxt2(ctxt, e2), betaE)
             end
           else 
-            let 
-              val (ctxt, betaE) = dig e2
-            in 
-              (PairCtxt1(e1, ctxt), betaE)
+            let val (ctxt, betaE) = dig e2
+            in (PairCtxt1(e1, ctxt), betaE)
             end
       | dig (pe as PlusExpr(IntExpr(_), IntExpr(_))) = (Hole, pe) 
       | dig (PlusExpr(l, IntExpr(i))) = 
-          let 
-            val (ctxt, betaE) = dig l
-          in 
-            (PlusCtxt2(ctxt, i), betaE)
+          let val (ctxt, betaE) = dig l
+          in (PlusCtxt2(ctxt, i), betaE)
           end
       | dig (pe as PlusExpr(l, r)) = 
-          let 
-            val (ctxt, betaE) = dig r
-          in 
-            (PlusCtxt1(l, ctxt), betaE)
+          let val (ctxt, betaE) = dig r
+          in (PlusCtxt1(l, ctxt), betaE)
           end 
       | dig (le as LessExpr(IntExpr(_), IntExpr(_))) = (Hole, le) 
       | dig (LessExpr(l, IntExpr(i))) = 
-          let 
-            val (ctxt, betaE) = dig l
-          in 
-            (LessCtxt2(ctxt, i), betaE)
+          let val (ctxt, betaE) = dig l
+          in (LessCtxt2(ctxt, i), betaE)
           end
       | dig (le as LessExpr(l, r)) = 
-          let 
-            val (ctxt, betaE) = dig r
-          in 
-            (LessCtxt1(l, ctxt), betaE)
+          let val (ctxt, betaE) = dig r
+          in (LessCtxt1(l, ctxt), betaE)
           end 
 
       | dig (ite as IfExpr(TrueExpr, _, _)) = (Hole, ite) 
       | dig (ite as IfExpr(FalseExpr, _, _)) = (Hole, ite)
       | dig (ite as IfExpr(condition, thenBranch, elseBranch)) = 
-          let 
-            val (ctxt, betaE) = dig condition
-          in 
-            (IfCtxt(ctxt, thenBranch, elseBranch), betaE)
+          let val (ctxt, betaE) = dig condition
+          in (IfCtxt(ctxt, thenBranch, elseBranch), betaE)
           end 
           
 
       | dig (ae as ApplyExpr(FunExpr(_,_,_,_,_), arg)) = (Hole, ae) 
       | dig (ApplyExpr(func, arg)) = 
-          let 
-            val (ctxt, betaE) = dig func
-          in 
-            (ApplyCtxt(ctxt, arg), betaE)
+          let val (ctxt, betaE) = dig func
+          in (ApplyCtxt(ctxt, arg), betaE)
           end  
 
       | dig (fst as FstExpr(PairExpr(_, _))) = (Hole, fst)
       | dig (FstExpr(pair)) =  
-          let 
-            val (ctxt, betaE) = dig pair
-          in 
-            (FstCtxt(ctxt), betaE)
+          let val (ctxt, betaE) = dig pair
+          in (FstCtxt(ctxt), betaE)
           end
       | dig (snd as SndExpr(PairExpr(_, _))) = (Hole, snd)
       | dig (SndExpr(pair)) =  
-          let 
-            val (ctxt, betaE) = dig pair
-          in 
-            (SndCtxt(ctxt), betaE)
+          let val (ctxt, betaE) = dig pair
+          in (SndCtxt(ctxt), betaE)
           end
 
       | dig (ce as CaseExpr(SumExpr(_,_,_), _,_,_,_)) = (Hole, ce)
       | dig (ce as CaseExpr(e, x1, e1, x2, e2)) = 
-          let 
-            val (ctxt, betaE) = dig e
-          in 
-            (CaseCtxt(ctxt, x1, e1, x2, e2), betaE)
+          let val (ctxt, betaE) = dig e
+          in (CaseCtxt(ctxt, x1, e1, x2, e2), betaE)
           end
       | dig (RollExpr(e)) = (*Roll of a value will be stuck*)
-          let 
-            val (ctxt, betaE) = dig e
-          in 
-            (RollCtxt(ctxt), betaE)
+          let val (ctxt, betaE) = dig e
+          in (RollCtxt(ctxt), betaE)
           end      
       | dig (ue as UnrollExpr(RollExpr(_))) = (Hole, ue)
       | dig (UnrollExpr(e)) = 
-          let 
-            val (ctxt, betaE) = dig e
-          in 
-            (UnrollCtxt(ctxt), betaE)
+          let val (ctxt, betaE) = dig e
+          in (UnrollCtxt(ctxt), betaE)
           end;
-
-
-
-
-
-      (*| dig (PlusExpr(l, r)) = 
-          if isVal r then 
-            let 
-              val (ctxt, betaE) = if canBeta l then (Hole, l) else dig l
-            in 
-              (PlusCtxt2(ctxt, r), betaE)
-            end
-          else 
-            let 
-              val (ctxt, betaE) = if canBeta r then (Hole, r) else dig r
-            in 
-              (PlusCtxt1(l, ctxt), betaE)
-            end *)
-      (*| dig _ = raise Stuck;*)
   in
     dig e
   end;
 
-
+fun fill Hole e = e
+  | fill (PlusCtxt1(l, ctxt)) e = PlusExpr(l, fill ctxt e) 
+  | fill (PlusCtxt2(ctxt, r)) e = PlusExpr(fill ctxt e, IntExpr(r)) 
+  | fill (LessCtxt1(l, ctxt)) e = LessExpr(l, fill ctxt e)
+  | fill (LessCtxt2(ctxt, r)) e = LessExpr(fill ctxt e, IntExpr(r))
+  | fill (IfCtxt(ctxt, tb, eb)) e = IfExpr(fill ctxt e, tb, eb)
+  | fill (ApplyCtxt(ctxt, arg)) e = ApplyExpr(fill ctxt e, arg)
+  | fill (PairCtxt1(e1, ctxt)) e = PairExpr(e1, fill ctxt e)
+  | fill (PairCtxt2(ctxt, e2)) e = PairExpr(fill ctxt e, e2)
+  | fill (FstCtxt(ctxt)) e = FstExpr(fill ctxt e)
+  | fill (SndCtxt(ctxt)) e = SndExpr(fill ctxt e)
+  | fill (SumCtxt(side, ctxt, typ)) e = SumExpr(side, fill ctxt e, typ)
+  | fill (CaseCtxt(ctxt, x1, e1, x2, e2)) e = CaseExpr(fill ctxt e, x1, e1, x2, e2)
+  | fill (RollCtxt(ctxt)) e = RollExpr(fill ctxt e)
+  | fill (UnrollCtxt(ctxt)) e = UnrollExpr(fill ctxt e)
 
 
 
