@@ -105,6 +105,14 @@ test isVal "t10" t10 false;
 test isVal "tRoll" tRoll false;
 test isVal "funVar" funVar true;
 
+(*Test isVal*)
+print("************************");
+print("Testing function decompose\n");
+print("************************");
+
+test decompose "e2" e2 (SumCtxt (Right,PairCtxt2 (Hole,IntExpr 6),Sum (Unit,Prod (Int,Int))),
+                        IfExpr (FalseExpr,IntExpr 4,IntExpr 5)) ;
+
 
 
 

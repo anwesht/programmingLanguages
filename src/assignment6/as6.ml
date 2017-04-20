@@ -217,12 +217,62 @@ fun tc expr =
     typeExpr expr nil
   end;
 
+
 fun isVal TrueExpr = true
   | isVal FalseExpr = true
   | isVal (IntExpr(_)) = true
   | isVal (FunExpr(_,_,_,_,_)) = true
   | isVal UnitExpr = true
   | isVal _ = false;
+
+fun decompose e = 
+  let 
+    fun canBeta (IfExpr(TrueExpr, _, _)) = true
+      | canBeta (IfExpr(FalseExpr, _, _)) = true
+      | canBeta e = if isVal e then raise Stuck else false;
+
+    fun dig (n as IntExpr(_)) = (Hole, n)
+      | dig (f as FalseExpr) = (Hole, f)(*
+      | dig (IfExpr(condition, thenBranch, elseBranch)) = 
+          if isVal condition then 
+
+      | dig (SumExpr(Left, e, t)) =
+          (SumCtxt(Left, dig e, t))*)
+      | dig (SumExpr(Right, e, t)) = 
+           let 
+              val p as (ctxt, betaE) = if canBeta e then (Hole, e) else dig e
+            in 
+              (SumCtxt(Right, ctxt, t), betaE)
+              (*(PairCtxt2(ctxt, e2), betaE)*)
+            end
+          
+      | dig (PairExpr(e1, e2)) = 
+          if isVal e2 then
+            let 
+              val p as (ctxt, betaE) = if canBeta e1 then (Hole, e1) else dig e1
+            in 
+              (PairCtxt2(ctxt, e2), betaE)
+            end
+          else 
+            let 
+              val p as (ctxt, betaE) = if canBeta e2 then (Hole, e2) else dig e2
+            in 
+              (PairCtxt1(e1, ctxt), betaE)
+            end
+      | dig _ = raise Stuck;
+
+
+    (*val p as (ctxt, betaE) = dig e;*)
+  in
+    (*if isVal betaE then raise Stuck
+    else p*)
+    dig e
+  end;
+
+
+
+
+
 
 
 
