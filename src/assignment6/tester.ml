@@ -110,12 +110,25 @@ print("************************");
 print("Testing function decompose\n");
 print("************************");
 
-val plusExpr = PlusExpr(IntExpr(3), IntExpr(4));
+val ite_int = IfExpr (FalseExpr,IntExpr 4,IntExpr 5);
+val pe1 = PlusExpr(IntExpr(3), IntExpr(4));
+val pe2 = PlusExpr(ite_int, IntExpr(4));
+val pe3 = PlusExpr(IntExpr(3), ite_int);
 
-test decompose "plusExpr" plusExpr (Hole, plusExpr);
+val lt1 = LessExpr(IntExpr(3), IntExpr(4));
+val lt2 = LessExpr(ite_int, IntExpr(4));
+val lt3 = LessExpr(IntExpr(3), ite_int);
+
+test decompose "pe1" pe1 (Hole, pe1);
+test decompose "pe2" pe2 (PlusCtxt2 (Hole,4), ite_int);
+test decompose "pe3" pe3 (PlusCtxt1 (IntExpr 3,Hole), ite_int);
+
+test decompose "lt1" lt1 (Hole, lt1);
+test decompose "lt2" lt2 (LessCtxt2 (Hole,4), ite_int);
+test decompose "lt3" lt3 (LessCtxt1 (IntExpr 3,Hole), ite_int);
 
 test decompose "e2" e2 (SumCtxt (Right,PairCtxt2 (Hole,IntExpr 6),Sum (Unit,Prod (Int,Int))),
-                        IfExpr (FalseExpr,IntExpr 4,IntExpr 5)) ;
+                        ite_int) ;
 
 
 

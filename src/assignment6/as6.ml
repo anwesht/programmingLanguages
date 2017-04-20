@@ -261,8 +261,7 @@ fun decompose e =
             in 
               (PairCtxt1(e1, ctxt), betaE)
             end
-      | dig (pe as PlusExpr(IntExpr(_), IntExpr(_))) =
-          (Hole, pe) 
+      | dig (pe as PlusExpr(IntExpr(_), IntExpr(_))) = (Hole, pe) 
       | dig (PlusExpr(l, IntExpr(i))) = 
           let 
             val (ctxt, betaE) = if canBeta l then (Hole, l) else dig l
@@ -274,6 +273,19 @@ fun decompose e =
               val (ctxt, betaE) = if canBeta r then (Hole, r) else dig r
             in 
               (PlusCtxt1(l, ctxt), betaE)
+            end 
+      | dig (le as LessExpr(IntExpr(_), IntExpr(_))) = (Hole, le) 
+      | dig (LessExpr(l, IntExpr(i))) = 
+          let 
+            val (ctxt, betaE) = if canBeta l then (Hole, l) else dig l
+          in 
+            (LessCtxt2(ctxt, i), betaE)
+          end
+      | dig (LessExpr(l, r)) = 
+            let 
+              val (ctxt, betaE) = if canBeta r then (Hole, r) else dig r
+            in 
+              (LessCtxt1(l, ctxt), betaE)
             end 
       (*| dig (PlusExpr(l, r)) = 
           if isVal r then 
