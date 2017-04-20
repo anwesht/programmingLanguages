@@ -12,7 +12,7 @@ case tc t2 of
 fun test func id expr expected = 
   if (func expr) = expected then
     print (id^" Success!!! :) \n")
-  else print (id^" Failure! :( \n") ;
+  else print ("______________\n"^id^" Failure! :( \n______________\n") ;
 
 
 val t1 = UnitExpr;
@@ -109,6 +109,10 @@ test isVal "funVar" funVar true;
 print("************************");
 print("Testing function decompose\n");
 print("************************");
+
+val plusExpr = PlusExpr(IntExpr(3), IntExpr(4));
+
+test decompose "plusExpr" plusExpr (Hole, plusExpr);
 
 test decompose "e2" e2 (SumCtxt (Right,PairCtxt2 (Hole,IntExpr 6),Sum (Unit,Prod (Int,Int))),
                         IfExpr (FalseExpr,IntExpr 4,IntExpr 5)) ;
