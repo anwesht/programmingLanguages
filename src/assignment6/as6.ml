@@ -223,6 +223,9 @@ fun isVal TrueExpr = true
   | isVal (IntExpr(_)) = true
   | isVal (FunExpr(_,_,_,_,_)) = true
   | isVal UnitExpr = true
+  | isVal (RollExpr(e)) = isVal e
+  | isVal (SumExpr(_, e, _)) = isVal e
+  | isVal (PairExpr(e1, e2)) = isVal e1 andalso isVal e2
   | isVal _ = false;
 
 fun decompose e = 
@@ -380,10 +383,17 @@ fun smallStep e =
 
 fun bigStep e =
   let 
-    val next = smallStep e 
+    val next = if not (isVal e ) then smallStep e else e
   in 
     if not (isVal next) then bigStep next else next
   end
+
+(*fun bigStep e =
+  let 
+    val next = smallStep e 
+  in 
+    if not (isVal next) then bigStep next else next
+  end*)
 
 
 
