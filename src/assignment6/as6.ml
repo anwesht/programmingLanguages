@@ -328,8 +328,47 @@ fun fill Hole e = e
   | fill (RollCtxt(ctxt)) e = RollExpr(fill ctxt e)
   | fill (UnrollCtxt(ctxt)) e = UnrollExpr(fill ctxt e)
 
+fun beta e =
+  let
+    fun sub (e:expr) x TrueExpr = TrueExpr
+      | sub e x FalseExpr = FalseExpr
+      | sub e x (ie as IntExpr(_)) = ie
+      | sub e x (ve as VarExpr(v)) = if x=v then e else ve
+      | sub e x (PlusExpr(left, right)) = PlusExpr((sub e x left), (sub e x right))
+      | sub e x (LessExpr(left, right)) = LessExpr((sub e x left), (sub e x right))
+      | sub e x (IfExpr(condition, thenBranch, elseBranch)) = 
+          IfExpr((sub e x condition), (sub e x thenBranch), (sub e x elseBranch))
+      | sub e x (ApplyExpr(function, argument)) = ApplyExpr((sub e x function), (sub e x argument))
+      | sub e x (fe as FunExpr(functionName, parameterName, parameterType, returnType, body)) = 
+          if (functionName = x orelse parameterName = x) then fe
+          else 
+            FunExpr(functionName, parameterName, parameterType, returnType, 
+              (sub e x body)
+            )
 
+    fun betaStep (PlusExpr(IntExpr(l), IntExpr(r))) = IntExpr(l + r)
+      | betaStep (LessExpr(IntExpr(l), IntExpr(r))) = if l < r then TrueExpr else FalseExpr
+      | betaStep (IfExpr(TrueExpr, thenBranch, _)) = thenBranch
+      | betaStep (IfExpr(FalseExpr, _, elseBranch)) = elseBranch
+      | betaStep (ApplyExpr(f as FunExpr(funName, paramName, paramType, returnType, body), arg)) = 
+              (sub arg paramName (sub f funName body) )
+      | betaStep (FstExpr(PairExpr(fst, _))) = fst
+      | betaStep (SndExpr(PairExpr(_, snd))) = snd
+      | betaStep (CaseExpr(SumExpr(Left, e, _), x1, e1,_,_)) = sub e x1 e1
+      | betaStep (CaseExpr(SumExpr(Right, e, _), _,_, x2, e2)) = sub e x2 e2
+      | betaStep (UnrollExpr(RollExpr(e))) = e
+      | betaStep _ = raise Stuck
+  in
+    betaStep e
+  end
 
+fun smallStep e = 
+  let   
+    val (ctxt, betaE) = decompose e
+    val betaSteppedE = beta betaE
+  in 
+    fill ctxt betaSteppedE
+  end
 
 
 
