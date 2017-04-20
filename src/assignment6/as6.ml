@@ -345,6 +345,14 @@ fun beta e =
             FunExpr(functionName, parameterName, parameterType, returnType, 
               (sub e x body)
             )
+      | sub e x (PairExpr(e1, e2)) = PairExpr(sub e x e1, sub e x e2)
+      | sub e x (FstExpr(expr)) = FstExpr(sub e x expr)
+      | sub e x (SndExpr(expr)) = SndExpr(sub e x expr)
+      | sub e x (SumExpr(side, expr, typ)) = SumExpr(side, sub e x expr, typ)
+      | sub e x (CaseExpr(expr, x1, e1, x2, e2)) = 
+          CaseExpr(sub e x expr, x1, sub e x e1, x2, sub e x e2)
+      | sub e x (RollExpr(expr)) = RollExpr(sub e x expr)
+      | sub e x (UnrollExpr(expr)) = UnrollExpr(sub e x expr);
 
     fun betaStep (PlusExpr(IntExpr(l), IntExpr(r))) = IntExpr(l + r)
       | betaStep (LessExpr(IntExpr(l), IntExpr(r))) = if l < r then TrueExpr else FalseExpr
@@ -368,6 +376,13 @@ fun smallStep e =
     val betaSteppedE = beta betaE
   in 
     fill ctxt betaSteppedE
+  end
+
+fun bigStep e =
+  let 
+    val next = smallStep e 
+  in 
+    if not (isVal next) then bigStep next else next
   end
 
 
