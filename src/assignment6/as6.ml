@@ -23,7 +23,7 @@ fun tc expr =
           Prod((unroll rType t1), (unroll rType t2))
       | unroll rType (Sum(t1, t2)) = 
           Sum((unroll rType t1), (unroll rType t2))
-(*todo: check case for recursive type. Should be ok if maximally rolled.*)
+(*todo: check case for recursive type. Should be ok if maximally rolled???*)
       | unroll rType (recType as Rec(t, tBody)) = tBody;
 
     fun subT tVar eType Bool = Bool
@@ -199,6 +199,7 @@ fun tc expr =
           in 
             case eType of
               SOME(et) =>
+              (*todo: This is not Complete!!!*)
                 SOME(Rec("t", subT (Var("t")) et et))
               | NONE => NONE
           end
@@ -212,7 +213,7 @@ fun tc expr =
               | _ => NONE
           end
 
-      | typeExpr other _ = NONE
+      | typeExpr other _ = NONE;
   in 
     typeExpr expr nil
   end;
@@ -280,36 +281,58 @@ fun decompose e =
           end 
           
 
-      | dig (ae as ApplyExpr(FunExpr(_,_,_,_,_), arg)) = (Hole, ae) 
+      | dig (ae as ApplyExpr(FunExpr(_,_,_,_,_), arg)) = (print("dig apply hole\n");(Hole, ae) )
       | dig (ApplyExpr(func, arg)) = 
           let val (ctxt, betaE) = dig func
-          in (ApplyCtxt(ctxt, arg), betaE)
+          in (print("dig apply \n"); (ApplyCtxt(ctxt, arg), betaE))
           end  
 
-      | dig (fst as FstExpr(PairExpr(_, _))) = (Hole, fst)
+      | dig (fst as FstExpr(PairExpr(_, _))) = (print("print First hole\n"); (Hole, fst))
       | dig (FstExpr(pair)) =  
           let val (ctxt, betaE) = dig pair
-          in (FstCtxt(ctxt), betaE)
+          in (print("fst\n"); (FstCtxt(ctxt), betaE))
           end
-      | dig (snd as SndExpr(PairExpr(_, _))) = (Hole, snd)
+      | dig (snd as SndExpr(PairExpr(_, _))) = (print("print Second hole\n");(Hole, snd))
       | dig (SndExpr(pair)) =  
           let val (ctxt, betaE) = dig pair
-          in (SndCtxt(ctxt), betaE)
+          in (print("snd\n"); (SndCtxt(ctxt), betaE))
           end
-
-      | dig (ce as CaseExpr(SumExpr(_,_,_), _,_,_,_)) = (Hole, ce)
+      (*dig SumExpr to a value first.???*)
+      | dig (ce as CaseExpr(SumExpr(_,_,_), _,_,_,_)) = (print("dig case hole \n");(Hole, ce))
+      (*| dig (ce as CaseExpr(se as SumExpr(_,e,_), x1, e1, x2, e2)) = 
+          if isVal e then (print("dig case hole \n");(Hole, ce))
+          else (print("case with sumexpr context."); 
+            let val (ctxt, betaE) = dig se
+            in (CaseCtxt(ctxt, x1, e1, x2, e2), betaE)
+            end)*)
+      (*| dig (ce as CaseExpr(se as SumExpr(Left,e,_), x1, e1, x2, e2)) = 
+          if isVal e then (print("dig case hole \n");(Hole, ce))
+          else (print("case with sumexpr context."); 
+            let val (ctxt, betaE) = dig se
+            in (CaseCtxt(ctxt, x1, e1, x2, e2), betaE)
+            end)*)
+      (*| dig (ce as CaseExpr(se as SumExpr(Right,e,_), x1, e1, x2, e2)) = 
+          let 
+            val subbed*)
       | dig (ce as CaseExpr(e, x1, e1, x2, e2)) = 
           let val (ctxt, betaE) = dig e
-          in (CaseCtxt(ctxt, x1, e1, x2, e2), betaE)
+          in (print("dig case\n"); (CaseCtxt(ctxt, x1, e1, x2, e2), betaE))
           end
       | dig (RollExpr(e)) = (*Roll of a value will be stuck*)
           let val (ctxt, betaE) = dig e
-          in (RollCtxt(ctxt), betaE)
+          in (print("dig rolling\n"); (RollCtxt(ctxt), betaE))
           end      
-      | dig (ue as UnrollExpr(RollExpr(_))) = (Hole, ue)
+      (*| dig (ue as UnrollExpr(RollExpr(_))) = (print("dig unroll hole\n"); (Hole, ue))*)
+      | dig (ue as UnrollExpr(r as RollExpr(e))) = (
+            if isVal e then (print("dig unroll hole\n"); (Hole, ue))
+            else 
+              let val (ctxt, betaE) = dig r
+              in (print("dig: unroll with roll e\n"); (UnrollCtxt(ctxt), betaE))
+              end
+          )
       | dig (UnrollExpr(e)) = 
           let val (ctxt, betaE) = dig e
-          in (UnrollCtxt(ctxt), betaE)
+          in (print("dig: unroll e\n"); (UnrollCtxt(ctxt), betaE))
           end;
   in
     dig e
@@ -354,7 +377,14 @@ fun beta e =
       | sub e x (SndExpr(expr)) = SndExpr(sub e x expr)
       | sub e x (SumExpr(side, expr, typ)) = SumExpr(side, sub e x expr, typ)
       | sub e x (CaseExpr(expr, x1, e1, x2, e2)) = 
-          CaseExpr(sub e x expr, x1, sub e x e1, x2, sub e x e2)
+          let 
+            val subbedE = sub e x expr
+            val subbedE1 = if x = x1 then e1 else sub e x e1
+            val subbedE2 = if x = x2 then e2 else sub e x e2 
+          in CaseExpr(subbedE, x1, subbedE1, x2, subbedE2)
+          end
+     (* | sub e x (CaseExpr(expr, x1, e1, x2, e2)) = 
+          CaseExpr(sub e x expr, x1, e1, x2, e2)*)
       | sub e x (RollExpr(expr)) = RollExpr(sub e x expr)
       | sub e x (UnrollExpr(expr)) = UnrollExpr(sub e x expr);
 
@@ -362,13 +392,28 @@ fun beta e =
       | betaStep (LessExpr(IntExpr(l), IntExpr(r))) = if l < r then TrueExpr else FalseExpr
       | betaStep (IfExpr(TrueExpr, thenBranch, _)) = thenBranch
       | betaStep (IfExpr(FalseExpr, _, elseBranch)) = elseBranch
+      (*| betaStep (ApplyExpr(f as FunExpr(funName, paramName, paramType, returnType, body), arg)) = 
+          if funName = paramName then raise Stuck
+          else (print("Applying\n"); (sub arg paramName (sub f funName body) ))  *)
       | betaStep (ApplyExpr(f as FunExpr(funName, paramName, paramType, returnType, body), arg)) = 
-              (sub arg paramName (sub f funName body) )
-      | betaStep (FstExpr(PairExpr(fst, _))) = fst
-      | betaStep (SndExpr(PairExpr(_, snd))) = snd
-      | betaStep (CaseExpr(SumExpr(Left, e, _), x1, e1,_,_)) = sub e x1 e1
-      | betaStep (CaseExpr(SumExpr(Right, e, _), _,_, x2, e2)) = sub e x2 e2
-      | betaStep (UnrollExpr(RollExpr(e))) = e
+          if funName = paramName then raise Stuck
+          else (print("Applying\n"); (sub arg paramName (sub f funName body) ))
+      | betaStep (FstExpr(PairExpr(fst, _))) = (print("fst\n"); fst)
+      | betaStep (SndExpr(PairExpr(_, snd))) = (print("snd expression\n"); snd)
+      | betaStep (CaseExpr(SumExpr(Left, e, _), x1, e1,_,_)) = (
+          print("Case left\n"); 
+          (*if isVal e then (print("isval case left"); sub e x1 e1)*)
+          (*if isVal e then (print("isval case left"); e1)
+          else raise Stuck)*)
+          sub e x1 e1)
+      | betaStep (CaseExpr(SumExpr(Right, e, _), _,_, x2, e2)) = (
+          print("case right\n"); 
+          (*if isVal e then (print("isval case right"); sub e x2 e2)*)
+          (*if isVal e then (print("isval case right"); e2)*)
+          (*if isVal e then (print("isval case right"); e2)
+          else raise Stuck*)
+          sub e x2 e2)
+      | betaStep (UnrollExpr(RollExpr(e))) = (print("unrolling\n"); e)
       | betaStep _ = raise Stuck
   in
     betaStep e
@@ -389,6 +434,13 @@ fun bigStep e =
     if not (isVal next) then bigStep next else next
   end
 
+(*fun bigStep e =
+let 
+  val next = smallStep e 
+in 
+  if not (isVal next) then bigStep next else next
+end
+*)
 (*fun bigStep e =
   let 
     val next = smallStep e 

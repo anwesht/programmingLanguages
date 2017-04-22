@@ -261,8 +261,61 @@ test bigStep "bigStep e6" e6 (RollExpr
                  Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
         Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))));
 
+(* Define rType (rolled-list type) to represent mu t.unit+(int*t) *)
+val rType = Rec("t",Sum(Unit,Prod(Int,Var("t"))));
+
+(* Define uType (unrolled-list type) to represent unit+(int* mu t.unit+(int*t)) *)
+val uType = Sum(Unit,Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t"))))));
+(*
+val rLLType = Rec("tt", Sum(Unit, Prod(rType, Var("tt"))));
+val uLLType = Sum(Unit, Prod(Sum(Unit, Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t")))))), 
+      Rec("tt", Sum(Unit + (Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t"))))))))));
 
 
+val intList1 = 
+  RollExpr(
+    SumExpr(Right,
+            PairExpr(
+              IntExpr(2),
+              RollExpr(
+                SumExpr(Right,
+                        PairExpr(
+                          IntExpr(3),
+                          RollExpr(
+                            SumExpr(Right,
+                                    PairExpr(
+                                      IntExpr(4),
+                                      RollExpr(
+                                        SumExpr(Left,UnitExpr,uType))),
+                                    uType))),
+                        uType))),
+            uType));
 
+val intList2 = 
+  RollExpr(
+    SumExpr(Right,
+            PairExpr(
+              IntExpr(5),
+              RollExpr(
+                SumExpr(Right,
+                        PairExpr(
+                          IntExpr(6),
+                          RollExpr(
+                            SumExpr(Left,UnitExpr,uType))),
+                        uType))),
+            uType));
+
+val intListList = 
+  RollExpr(
+    SumExpr(Right, 
+            PairExpr(
+              intList1,
+              RollExpr(SumExpr(Right,
+                      PairExpr(
+                        intList2,
+                        RollExpr(
+                          SumExpr(Left,UnitExpr,uType))),
+                      uLLType))),
+            uLLType));*)
 
 
