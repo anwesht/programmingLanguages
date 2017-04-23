@@ -13,7 +13,7 @@ use "diMLazy-Au.sml";
   *)
 fun tc expr = 
   let 
-    fun unroll rType Bool = Bool
+    (*fun unroll rType Bool = Bool
       | unroll rType Int = Int
       | unroll rType Unit = Unit
       | unroll rType (vType as Var(t)) = rType
@@ -23,8 +23,23 @@ fun tc expr =
           Prod((unroll rType t1), (unroll rType t2))
       | unroll rType (Sum(t1, t2)) = 
           Sum((unroll rType t1), (unroll rType t2))
+      | unroll rType (recType as Rec(t, tBody)) = tBody;*)
+
+    fun unroll _ _ Bool = Bool
+      | unroll _ _ Int = Int
+      | unroll _ _ Unit = Unit
+      (*| unroll rType (vType as Var(t)) = rType*)
+      | unroll rType tVar (vType as Var(t)) = 
+          if tVar = t then rType else vType 
+      | unroll rType tVar (Arrow(argType, returnType)) = 
+          Arrow((unroll rType tVar argType), (unroll rType tVar returnType))
+      | unroll rType tVar (Prod(t1, t2)) = 
+          Prod((unroll rType tVar t1), (unroll rType tVar t2))
+      | unroll rType tVar (Sum(t1, t2)) = 
+          Sum((unroll rType tVar t1), (unroll rType tVar t2))
 (*todo: check case for recursive type. Should be ok if maximally rolled???*)
-      | unroll rType (recType as Rec(t, tBody)) = tBody;
+      (*| unroll rType tVar (recType as Rec(t, tBody)) = tBody;*)
+      | unroll rType tVar (recType as Rec(t, tBody)) = unroll rType tVar tBody;
 
     fun subT tVar eType Bool = Bool
       | subT tVar eType Int = Int
@@ -37,10 +52,87 @@ fun tc expr =
       | subT tVar eType (Sum(t1, t2)) = 
           Sum((subT tVar eType t1), (subT tVar eType t2))
       | subT tVar eType (recType as Rec(t, tBody)) = 
-          if eType = (unroll recType tBody) then
-            tVar
+          if eType = (unroll recType t tBody) then
+            (print("replacing with tvar. \n"); tVar)
           else 
-            Rec(t, (subT tVar eType tBody));
+            (print("not replacing with tvar.\n"); Rec(t, (subT tVar eType tBody))) ;
+
+      (*fun findPair t nil = NONE
+        | findPair t (to, tn)::ts = if t = to then SOME tn else findPair t ts*)
+
+      fun findPair t nil varList count = 
+            let val newt = "tv_"^Int.toString(count)
+            in (newt, (t, newt)::varList, count+1)
+            end
+        | findPair t ((to, tn)::ts) varList count = 
+            if t = to then (tn, varList, count) else findPair t ts varList count
+
+      fun alphaConvert Bool varList count = (Bool, varList, count)
+        | alphaConvert Int varList count = (Int, varList, count)
+        | alphaConvert Unit varList count = (Unit, varList, count)
+        | alphaConvert (Var(t)) varList count = 
+            let val (newt, newVarList, newCount) = findPair t varList varList count
+            in (Var(newt), newVarList, newCount)
+            end
+            (*case findPair t of 
+              SOME tn => (Var(tn), varList, count)
+              | NONE => ("tv_"^Int.toString(count), (t, tn)::varList, count+1)*)
+        | alphaConvert (Arrow(argType, returnType)) varList count = 
+            let 
+              val (newReturnType, newVarList, newCount) = alphaConvert returnType varList count
+              val (newArg, newVarList, newCount) = alphaConvert argType newVarList newCount
+            in 
+              (Arrow(newArg, newReturnType), newVarList, newCount)
+            end
+
+        | alphaConvert (Prod(t1, t2)) varList count = 
+            let 
+              val (newt1, newVarList, newCount) = alphaConvert t1 varList count
+              val (newt2, newVarList, newCount) = alphaConvert t2 newVarList newCount
+            in 
+              (Prod(newt1, newt2), newVarList, newCount)
+            end
+        | alphaConvert (Sum (t1, t2)) varList count = 
+            let 
+              val (newt1, newVarList, newCount) = alphaConvert t1 varList count
+              val (newt2, newVarList, newCount) = alphaConvert t2 newVarList newCount
+            in 
+              (Sum(newt1, newt2), newVarList, newCount)
+            end        
+        | alphaConvert (Rec(t, tBody)) varList count = 
+            let 
+              val (newt, newVarList, newCount) = findPair t varList varList count
+              val (aTBody, newVarList, newCount) = alphaConvert tBody newVarList newCount
+            in (Rec(newt, aTBody), newVarList, newCount)
+            end
+
+      fun isAlphaEquivalent e1 e2 =  
+        let 
+          val (ae1, varList, count) = alphaConvert e1 nil 0
+          val (ae2, varList, count) = alphaConvert e1 varList count
+        in 
+          if ae1 = ae2 then true else false
+        end
+          
+
+
+
+
+    (*fun findAndSubT eType Bool = Bool
+      | findAndSubT eType Int = Int
+      | findAndSubT _ _ Unit = Unit
+      | findAndSubT eType (vType as Var(_)) = vType
+      | findAndSubT eType (Arrow(argType, returnType)) = 
+          Arrow((findAndSubT eType argType), (findAndSubT eType returnType))
+      | findAndSubT eType (Prod(t1, t2)) = 
+          Prod((findAndSubT eType t1), (findAndSubT eType t2))
+      | findAndSubT eType (Sum(t1, t2)) = 
+          Sum((findAndSubT eType t1), (findAndSubT eType t2))
+      | findAndSubT eType (recType as Rec(t, tBody)) = 
+          if eType = (unroll recType tBody) then
+           
+          else 
+            Rec(t, (findAndSubT eType tBody));*)
 
     (** Look for the given variable within the given context 
       * @param var => the variable to search for
@@ -81,141 +173,192 @@ fun tc expr =
           and is augmented by new variables only by the expression FunExpr.
       * @returns => option of datatype typ. The NONE option is returned iff the expression is ill typed.
       *)
-    fun typeExpr TrueExpr _ = SOME Bool
-      | typeExpr FalseExpr _ = SOME Bool
-      | typeExpr (IntExpr(_)) _ = SOME Int
-      | typeExpr (PlusExpr(l, r)) context = 
-          if (typeExpr l context) = SOME Int andalso (typeExpr r context) = SOME Int then
-            SOME Int
-          else 
-            NONE
-      | typeExpr (LessExpr(l, r)) context = 
-          if (typeExpr l context) = SOME Int andalso (typeExpr r context) = SOME Int then
-            SOME Bool
-          else 
-            NONE
-      | typeExpr (IfExpr(condition, thenBranch, elseBranch)) context = 
-          if (typeExpr condition context) = SOME(Bool) then
-            let 
-              val typeOfThen = typeExpr thenBranch context
-            in 
-              if typeOfThen = (typeExpr elseBranch context) then
-                typeOfThen
-              else
-                NONE
-            end
-          else
-            NONE
-      | typeExpr (VarExpr(v)) context = 
-          lookupVar v context
+    fun typeExpr TrueExpr _ varCount = (SOME Bool, varCount)
+      | typeExpr FalseExpr _ varCount = (SOME Bool, varCount)
+      | typeExpr (IntExpr(_)) _ varCount = (SOME Int, varCount)
+      | typeExpr (PlusExpr(l, r)) context varCount = 
+          let 
+            val (tl, newCount) = (typeExpr l context varCount)
+            val (tr, newCount) = (typeExpr r context newCount)
+          in 
+            if  tl = SOME Int andalso tr = SOME Int then
+              (SOME Int, newCount)
+            else 
+              (NONE, newCount)
+          end
+      | typeExpr (LessExpr(l, r)) context varCount = 
+          let 
+            val (tl, newCount) = (typeExpr l context varCount)
+            val (tr, newCount) = (typeExpr r context newCount)
+          in 
+            if tl = SOME Int andalso tr = SOME Int then
+              (SOME Bool, newCount)
+            else 
+              (NONE, newCount)
+          end
+      | typeExpr (IfExpr(condition, thenBranch, elseBranch)) context varCount= 
+          let 
+            val (tcond, newCount) = typeExpr condition context varCount
+          in
+            if tcond = SOME Bool then
+              let 
+                val (typeOfThen, newCount) = typeExpr thenBranch context newCount
+                val (typeOfElse, newCount) = typeExpr elseBranch context newCount
+              in 
+                if typeOfThen = typeOfElse then (typeOfThen, newCount)
+                else (NONE, newCount)
+              end
+            else
+              (NONE, newCount)
+          end
+      | typeExpr (VarExpr(v)) context varCount= 
+          (lookupVar v context, varCount)
 
-      | typeExpr (FunExpr(funName, paramName, paramType, returnType, body)) context = 
+      | typeExpr (FunExpr(funName, paramName, paramType, returnType, body)) context varCount = 
           if isValidType paramType andalso isValidType returnType then
             let 
               val funPair = (funName, Arrow(paramType, returnType));
               val paramPair = (paramName, paramType);
               val currentContext = funPair::paramPair::context
+              val (tBody, newCount) = typeExpr body currentContext varCount
             in
-              case typeExpr body currentContext of
+              case tBody of
                 SOME(t) => 
-                  if t = returnType then
-                    SOME(#2(funPair))
-                  else 
-                    NONE
-                | NONE => NONE 
+                  (*if t = returnType then (SOME(#2(funPair)), newCount)*)
+                  if isAlphaEquivalent t returnType then (SOME(#2(funPair)), newCount)
+                  else (NONE, newCount)
+                | NONE => (NONE, newCount)
             end
-          else NONE
-      | typeExpr (ApplyExpr(func, arg)) context = 
-          (
-            case typeExpr func context of
-              SOME(Arrow(paramType, returnType)) =>
-                if (typeExpr arg context) = SOME(paramType) then
-                  SOME returnType
-                else NONE
-              | SOME(_) => NONE 
-              | NONE => NONE
-          )
-
-      | typeExpr UnitExpr _ = SOME Unit
-      | typeExpr (PairExpr(e1, e2)) context = 
+          else (NONE, varCount)
+      | typeExpr (ApplyExpr(func, arg)) context varCount =
           let
-            val t1 = typeExpr e1 context
-            val t2 = typeExpr e2 context
+             val (tfunc, newCount) = typeExpr func context varCount
+             val (targ, newCount) = typeExpr arg context newCount
+          in
+            case tfunc of
+              SOME(Arrow(paramType, returnType)) =>
+                (*if targ = SOME paramType then (SOME returnType, newCount)*)
+                (case targ of 
+                  SOME(t) => 
+                    if isAlphaEquivalent t paramType then (SOME returnType, newCount)
+                    else (NONE, newCount)
+                  | NONE => (NONE, newCount))
+              | _ => (NONE, newCount)
+          end
+
+      | typeExpr UnitExpr _ varCount = (SOME Unit, varCount)
+      | typeExpr (PairExpr(e1, e2)) context varCount = 
+          let
+            val (t1, newCount) = typeExpr e1 context varCount
+            val (t2, newCount) = typeExpr e2 context newCount
           in
             case t1 of 
               SOME(tt1) =>
                 (
                   case t2 of 
                     SOME(tt2) => 
-                      SOME(Prod(tt1, tt2))
-                    | NONE => NONE
+                      (SOME(Prod(tt1, tt2)), newCount)
+                    | NONE => (NONE, newCount)
                 )
-              | NONE => NONE
+              | NONE => (NONE, newCount)
           end
-      | typeExpr (FstExpr(pair)) context = 
-          (
-            case typeExpr pair context of 
-              SOME(Prod(fst, _)) => SOME(fst)
-              | _ => NONE
-          )
-      | typeExpr (SndExpr(pair)) context =
-          (
-            case typeExpr pair context of
-              SOME(Prod(_, snd)) => SOME(snd)
-              | _ => NONE
-          )
-       | typeExpr (SumExpr(side, e, t as Sum(l, r))) context =
+      | typeExpr (FstExpr(pair)) context varCount= 
+          let 
+            val (tpair, newCount) = typeExpr pair context varCount
+          in
+            case tpair of 
+              SOME(Prod(fst, _)) => (SOME(fst), newCount)
+              | _ => (NONE, newCount)
+          end
+      | typeExpr (SndExpr(pair)) context varCount =
+          let 
+            val (tpair, newCount) = typeExpr pair context varCount
+          in
+            case tpair of 
+                SOME(Prod(_, snd)) => (SOME(snd), newCount)
+                | _ => (NONE, newCount)
+          end
+       (*| typeExpr (SumExpr(side, e, t as Sum(l, r))) context varCount =
           if isValidType l andalso isValidType r then
             let 
-              val eType = typeExpr e context
+              val (eType, newCount) = typeExpr e context varCount
             in
+
               case side of 
                     Left => 
-                      if eType = SOME l then SOME(t)
-                      else NONE
+                      if eType = SOME l then (SOME t, newCount)
+                      else (print("none in inject left\n");(NONE, newCount))
                     | Right =>
-                      if eType = SOME r then SOME(t)
-                      else NONE
+                      if eType = SOME r then (SOME t, newCount)
+                      else (print("none in inject right\n");(NONE, newCount))
             end
-          else NONE
+          else (NONE, varCount)*)
+      | typeExpr (SumExpr(side, e, t as Sum(l, r))) context varCount =
+          if isValidType l andalso isValidType r then
+            let 
+              val (eType, newCount) = typeExpr e context varCount
+            in
+              case eType of 
+                SOME(et) => 
+                  ( 
+                    case side of 
+                      Left => 
+                        if isAlphaEquivalent et l then (SOME t, newCount)
+                        else (print("none in inject left\n");(NONE, newCount))
+                      | Right =>
+                        if isAlphaEquivalent et r then (SOME t, newCount)
+                        else (print("none in inject right\n");(NONE, newCount))
+                  )
+                | NONE => (NONE, newCount)
+            end
+          else (NONE, varCount)
 
-      | typeExpr (CaseExpr(e, x, e1, y, e2)) context =
-          (case typeExpr e context of
+      | typeExpr (CaseExpr(e, x, e1, y, e2)) context varCount =
+          let 
+            val (te, newCount) = typeExpr e context varCount
+          in
+            case te of
               SOME(Sum(l, r)) => 
                 let 
                   val e1Context = (x, l)::context
                   val e2Context = (y, r)::context
-                  val e1Type = typeExpr e1 e1Context
-                  val e2Type = typeExpr e2 e2Context
+                  val (e1Type, newCount) = typeExpr e1 e1Context newCount
+                  val (e2Type, newCount) = typeExpr e2 e2Context newCount
                 in
-                  if e1Type = e2Type then e1Type 
-                  else NONE
+                  if e1Type = e2Type then (e1Type, newCount)
+                  else (NONE, newCount)
                 end
-              | _ => NONE
-          )
-      | typeExpr (RollExpr(e)) context = 
+              | _ => (NONE, newCount)
+          end
+      | typeExpr (RollExpr(e)) context varCount = 
           let 
-            val eType = typeExpr e context
+            val (eType, newCount) = typeExpr e context varCount
+            val tVar = "tv_"^Int.toString(newCount)
           in 
             case eType of
               SOME(et) =>
               (*todo: This is not Complete!!!*)
-                SOME(Rec("t", subT (Var("t")) et et))
-              | NONE => NONE
+                (*(SOME(Rec("t", subT (Var("t")) et et)), newCount)*)
+                (*(SOME(Rec("t22", subT (Var("t22")) et et)), newCount)*)
+                (SOME(Rec(tVar, subT (Var(tVar)) et et)), newCount+1)
+              | NONE => (NONE, newCount)
           end
-      | typeExpr (UnrollExpr(e)) context = 
+      | typeExpr (UnrollExpr(e)) context varCount = 
           let 
-            val eType = typeExpr e context
+            val (eType, newCount) = typeExpr e context varCount
           in
             case eType of 
               SOME(rType as Rec(t, tBody)) =>
-                SOME(unroll rType tBody)
-              | _ => NONE
+                (SOME(unroll rType t tBody), newCount)
+              | _ => (NONE, newCount)
           end
 
-      | typeExpr other _ = NONE;
+      | typeExpr other _ varCount = (NONE, varCount);
+
+    (*fun findTVarFor et = *)
+
   in 
-    typeExpr expr nil
+    #1 (typeExpr expr nil 0)
   end;
 
 
