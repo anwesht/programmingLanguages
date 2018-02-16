@@ -35,8 +35,8 @@ val t9 = CaseExpr(t5,
                   SndExpr(VarExpr("z2"))
                  );
 val t10 = SumExpr(Right, 
-            PairExpr(IntExpr(5), IntExpr(6)),
-            Sum(Int, Bool));
+            PairExpr(IntExpr(5), IfExpr(TrueExpr, TrueExpr, FalseExpr)),
+            Sum(Int, Prod(Int, Bool)));
 
 val tRoll = RollExpr(
               SumExpr(
@@ -47,11 +47,7 @@ val tRoll = RollExpr(
                 uType)
               );
 
-val funVar = FunExpr("f", 
-  "x",
-  Prod(Int, Var("t")),
-  Int, 
-  IntExpr(4));
+val funVar = (FunExpr("f", "x", Prod(Int, Var("t")), Int, IntExpr(4)));
 
 print("************************");
 print("Testing Type Checker\n");
@@ -63,7 +59,7 @@ test tc "e4" e4 (SOME
                 (Arrow(
                   Rec ("t",Sum (Unit,Prod (Int,Var "t"))),
                   Rec ("t",Sum (Unit,Prod (Int,Var "t"))))));
-test tc "e5" e5 (SOME (Rec ("t",Sum (Unit,Prod (Int,Var "t")))));
+test tc "e5" e5 (SOME (Rec ("tv_3",Sum (Unit,Prod (Int,Var "tv_3")))));
 test tc "e6" e6 (SOME (Rec ("t",Sum (Unit,Prod (Int,Var "t")))));
 
 test tc "t1" t1 (SOME(Unit));
@@ -75,7 +71,7 @@ test tc "t6" t6 (SOME(Sum (Int,Bool)));
 test tc "t7" t7 NONE;
 test tc "t8" t8 (SOME(Bool));
 test tc "t9" t9 (SOME(Int));
-test tc "t10" t10 NONE;
+test tc "t10" t10 (SOME(Sum (Int,Prod (Int,Bool))));
 
 test tc "tRoll" tRoll NONE;
 test tc "funVar" funVar NONE;
@@ -89,15 +85,15 @@ test isVal "e1" e1 true;
 test isVal "e2" e2 false;
 test isVal "e3" e3 false;
 test isVal "e4" e4 true;
-test isVal "e5" e5 false;
+test isVal "e5" e5 true;
 test isVal "e6" e6 false;
 test isVal "t1" t1 true;
-test isVal "t2" t2 false;
+test isVal "t2" t2 true;
 test isVal "t3" t3 false;
 test isVal "t4" t4 false;
-test isVal "t5" t5 false;
-test isVal "t6" t6 false;
-test isVal "t7" t7 false;
+test isVal "t5" t5 true;
+test isVal "t6" t6 true;
+test isVal "t7" t7 true;
 test isVal "t8" t8 false;
 test isVal "t9" t9 false;
 test isVal "t10" t10 false;

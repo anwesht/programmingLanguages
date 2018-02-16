@@ -176,7 +176,8 @@ fun eval expr =
           let 
             val newExpr = betaApply func arg
           in
-            if isTypeSafe newExpr then searchRule newExpr else raise Stuck
+            (*if isTypeSafe newExpr then searchRule newExpr else raise Stuck*)
+            searchRule newExpr
           end
   in
     searchRule expr
@@ -192,7 +193,11 @@ val p1 = PlusExpr(IntExpr(3), IntExpr(4));
 val l = LessExpr(VarExpr("a"), VarExpr("b"));
 val l1 = LessExpr(IntExpr(3), IntExpr(4));
 val ifSimple = IfExpr(TrueExpr, IntExpr(2), IntExpr(3));
+
+
 val ifBad = IfExpr(TrueExpr, IntExpr(2), TrueExpr);
+
+
 val ifBad1 = IfExpr(IntExpr(1), TrueExpr, FalseExpr);
 val ifExp = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), 
   PlusExpr(VarExpr("a"), IntExpr(10)), PlusExpr(IntExpr(5), IntExpr(10)));
@@ -200,7 +205,12 @@ val funExp = FunExpr("f", "a", Int, Int, ifExp);
 val applyFunExp1 = ApplyExpr(funExp, IntExpr(3));
 val applyFunExp2 = ApplyExpr(funExp, IntExpr(7));
 val funExp1 = FunExpr("f", "unused", Int, Int, ifSimple);
-val funExp2 = FunExpr("f", "a", Int, Int, ifBad);   (*Evaluates even if not typesafe as condition always true.*)
+
+
+val funExp2 = FunExpr("f", "a", Int, Int, ifBad);   
+
+
+(*Evaluates even if not typesafe as condition always true.*)
 val ifForFun = IfExpr(LessExpr(VarExpr("a"), IntExpr(5)), VarExpr("a"), IntExpr(5));  (*returns 5 or less*)
 val funExp3 = FunExpr("f", "a", Int, Int, ifForFun);
 val applyFunExp3 = ApplyExpr(funExp3, IntExpr(99));

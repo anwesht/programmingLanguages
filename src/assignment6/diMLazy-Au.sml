@@ -81,6 +81,8 @@ val rType = Rec("t",Sum(Unit,Prod(Int,Var("t"))));
 (* Define uType (unrolled-list type) to represent unit+(int* mu t.unit+(int*t)) *)
 val uType = Sum(Unit,Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t"))))));
 
+val vType = Sum (Unit,Prod (Int,Rec ("t1",Sum (Unit,Prod (Int,Var "t1")))));
+
 (* Define e4 to represent:
    fun reverse(L:rType):rType =
      (fun revDiffLists(Ls:rType*rType):rType =
@@ -98,6 +100,18 @@ val uType = Sum(Unit,Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t"))))));
      in revDiffLists(L,nil)
      end
 *)
+
+val argExpr = PairExpr(SndExpr(VarExpr("nonempty")),
+                           RollExpr(SumExpr(Right, 
+                                            PairExpr(FstExpr(VarExpr("nonempty")),
+                                                     SndExpr(VarExpr("Ls"))),
+                                            uType)))
+    val lastBody = ApplyExpr(VarExpr("revDiffLists"),argExpr)
+    val rDLBody = CaseExpr(UnrollExpr(FstExpr(VarExpr("Ls"))),
+                           "empty", SndExpr(VarExpr("Ls")),
+                           "nonempty",lastBody)
+    val f1 = FunExpr("revDiffLists","Ls",Prod(rType,rType),rType,rDLBody)
+
 val e4 =
   let
     val argExpr = PairExpr(SndExpr(VarExpr("nonempty")),
@@ -106,6 +120,65 @@ val e4 =
                                                      SndExpr(VarExpr("Ls"))),
                                             uType)))
     val lastBody = ApplyExpr(VarExpr("revDiffLists"),argExpr)
+    val rDLBody = CaseExpr(UnrollExpr(FstExpr(VarExpr("Ls"))),
+                           "empty", SndExpr(VarExpr("Ls")),
+                           "nonempty",lastBody)
+    val f1 = FunExpr("revDiffLists","Ls",Prod(rType,rType),rType,rDLBody)
+    val e = PairExpr(VarExpr("L"),RollExpr(SumExpr(Left,UnitExpr,uType)))
+  in
+    FunExpr("reverse","L",rType,rType,ApplyExpr(f1,e)) 
+  end;
+
+val g =
+  let
+    val argExpr = PairExpr(SndExpr(VarExpr("nonempty")),
+                           RollExpr(SumExpr(Right, 
+                                            PairExpr(FstExpr(VarExpr("nonempty")),
+                                                     SndExpr(VarExpr("Ls"))),
+                                            uType)))
+    val arg = SndExpr(VarExpr("nonempty"))
+    val lastBody = ApplyExpr(VarExpr("revDiffLists"),arg)
+    val rDLBody = CaseExpr(UnrollExpr(VarExpr("Ls")),
+                           "empty", VarExpr("Ls"),
+                           "nonempty",lastBody)
+    val f1 = FunExpr("revDiffLists","Ls",rType,rType,rDLBody)
+    val e = VarExpr("L")
+  in
+    FunExpr("reverse","L",rType,rType,ApplyExpr(f1,e)) 
+  end;
+
+val e4_1 =
+  let
+    val etest = RollExpr
+          (SumExpr
+             (Left,UnitExpr,
+              Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))));
+    val etest2 = RollExpr(
+        SumExpr(Right,
+                PairExpr(
+                  IntExpr(4),
+                  RollExpr(
+                    SumExpr(Left,UnitExpr,uType))),
+                uType));
+
+    val epair = PairExpr(etest,RollExpr(SumExpr(Left,UnitExpr,uType)))
+    val epair2 = PairExpr(etest2,RollExpr(SumExpr(Left,UnitExpr,uType)))
+
+    val argExpr = PairExpr(SndExpr(VarExpr("nonempty")),
+                           RollExpr(SumExpr(Right, 
+                                            PairExpr(FstExpr(VarExpr("nonempty")),
+                                                     SndExpr(VarExpr("Ls"))),
+                                            uType)))
+    (*val lastBody = ApplyExpr(VarExpr("revDiffLists"),argExpr)*)
+    (*val lastBody = SndExpr(VarExpr("nonempty"))*)
+    (*val lastBody = argExpr*)
+    (*val lastBody = CaseExpr(UnrollExpr(FstExpr(argExpr)),
+                           "empty", SndExpr(argExpr),
+                            "nonempty", VarExpr("revDiffLists"))*)
+    (*val lastBody = ApplyExpr(VarExpr("revDiffLists"), epair2)*)
+    (*val lastBody = VarExpr("revDiffLists")*)
+    val lastBody = SndExpr(VarExpr("nonempty"))
+
     val rDLBody = CaseExpr(UnrollExpr(FstExpr(VarExpr("Ls"))),
                            "empty", SndExpr(VarExpr("Ls")),
                            "nonempty",lastBody)
@@ -149,5 +222,282 @@ val e5 =
                         uType))),
             uType));
 
+val e5_1 = RollExpr
+          (SumExpr
+             (Left,UnitExpr,
+              Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))));
+
+val e5_2 = 
+      RollExpr(
+        SumExpr(Right,
+                PairExpr(
+                  IntExpr(4),
+                  RollExpr(
+                    SumExpr(Left,UnitExpr,uType))),
+                uType));
+
+val e5_3 =       
+      RollExpr(
+             SumExpr(Right,
+                PairExpr(
+                  IntExpr(3),
+                  RollExpr(
+                    SumExpr(Right,
+                            PairExpr(
+                              IntExpr(4),
+                              RollExpr(
+                                SumExpr(Left,UnitExpr,uType))),
+                            uType))),
+                uType));
+
+val uTypeAlt = Sum(Unit,Prod(Int,Rec("tv_1",Sum(Unit,Prod(Int,Var("tv_1"))))));
+
+val e5Alt = 
+  RollExpr(
+    SumExpr(Right,
+            PairExpr(
+              IntExpr(2),
+              RollExpr(
+                SumExpr(Right,
+                        PairExpr(
+                          IntExpr(3),
+                          RollExpr(
+                            SumExpr(Right,
+                                    PairExpr(
+                                      IntExpr(4),
+                                      RollExpr(
+                                        SumExpr(Left,UnitExpr,uTypeAlt))),
+                                    uType))),
+                        uTypeAlt))),
+            uType));
+
 (* Define e6 to represent e4(e5) *)
 val e6 = ApplyExpr(e4,e5);
+val e6_1 = ApplyExpr(e4_1,e5_2);
+
+val pair1 =  PairExpr
+    (RollExpr
+       (SumExpr
+          (Right,
+           PairExpr
+             (IntExpr 4,
+              RollExpr
+                (SumExpr
+                   (Left,UnitExpr,
+                    Sum
+                      (Unit,
+                       Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+           Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))),
+     RollExpr
+       (SumExpr
+          (Right,
+           PairExpr
+             (IntExpr 3,
+              RollExpr
+                (SumExpr
+                   (Left,UnitExpr,
+                    Sum
+                      (Unit,
+                       Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+           Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))));
+
+val u = UnrollExpr(FstExpr(pair1));
+
+val pair2 = PairExpr
+    (e5_3
+      ,
+     RollExpr
+       (SumExpr
+          (Right,
+           PairExpr
+             (IntExpr 3,
+              RollExpr
+                (SumExpr
+                   (Left,UnitExpr,
+                    Sum
+                      (Unit,
+                       Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t")))))))),
+           Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))))));
+  val argExpr = PairExpr(SndExpr(VarExpr("nonempty")),
+                           RollExpr(SumExpr(Right, 
+                                            PairExpr(FstExpr(VarExpr("nonempty")),
+                                                     SndExpr(VarExpr("Ls"))),
+                                            uType)))
+    (*val lastBody = ApplyExpr(VarExpr("revDiffLists"),argExpr)*)
+    (*val lastBody = SndExpr(VarExpr("nonempty"))*)
+    val lastBody = argExpr
+    val rDLBody = CaseExpr(UnrollExpr(FstExpr(VarExpr("Ls"))),
+                           "empty", SndExpr(VarExpr("Ls")),
+                           "nonempty",lastBody)
+    val f1 = FunExpr("revDiffLists","Ls",Prod(rType,rType),rType,rDLBody)
+    val e = PairExpr(e5,RollExpr(SumExpr(Left,UnitExpr,uType)))
+
+val testing = ApplyExpr(f1, pair2);
+
+
+(*val rLLType = Rec("tt", Sum(Unit, Prod(rType, Var("tt"))));*)
+
+val uLLType = 
+  Sum(
+    Unit, 
+    Prod(
+      Sum(
+        Unit, 
+        Prod(
+          Int,
+          Rec("t",Sum(Unit,Prod(Int,Var("t")))))
+        ), 
+      Rec("tt", 
+        Sum(
+          Unit, (
+            Prod(
+              Sum(
+                Unit, 
+                Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t")))))
+                ),
+              Var("tt")))))));
+
+(*val rType = Rec("t",Sum(Unit,Prod(Int,Var("t"))));*)
+
+val uLLAlt = 
+  Sum(
+    Unit, 
+    Prod(
+      rType
+      , 
+      Rec("tt", 
+        Sum(
+          Unit, (
+            Prod(
+              rType,
+              Var("tt")))))));
+
+val rLLType = 
+  (Rec
+    ("tv_0",
+      Sum
+        (Unit,
+        Prod
+          (Sum (Unit,Prod (Int,Rec ("t",Sum (Unit,Prod (Int,Var "t"))))),
+            Var "tv_0"))))
+(*val uLLType = Sum(Unit, Prod(Sum(Unit, Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t")))))), 
+      Rec("t", Sum(Unit, (Prod(
+        Sum(Unit, Prod(Int,Rec("t",Sum(Unit,Prod(Int,Var("t")))))),
+        Var("t")))))));*)
+        (*(Int, Rec("t", Sum(Unit, Prod(Int, Var("tt"))))))))));*)
+      (*Rec("tt", Sum(Unit, (Prod(Int, Rec("t", Sum(Unit, Prod(Int, Var("tt"))))))))));*)
+
+
+val intList1 = 
+  RollExpr(
+    SumExpr(Right,
+            PairExpr(
+              IntExpr(2),
+              RollExpr(
+                SumExpr(Right,
+                        PairExpr(
+                          IntExpr(3),
+                          RollExpr(
+                            SumExpr(Right,
+                                    PairExpr(
+                                      IntExpr(4),
+                                      RollExpr(
+                                        SumExpr(Left,UnitExpr,uType))),
+                                    uType))),
+                        uType))),
+            uType));
+
+val intList2 = 
+  RollExpr(
+    SumExpr(Right,
+            PairExpr(
+              IntExpr(5),
+              RollExpr(
+                SumExpr(Right,
+                        PairExpr(
+                          IntExpr(6),
+                          RollExpr(
+                            SumExpr(Left,UnitExpr,uType))),
+                        uType))),
+            uType));
+
+val unitLL = 
+  RollExpr(
+    SumExpr(
+      Left,
+      UnitExpr, 
+      uLLType ))
+
+val unitAlt = 
+  RollExpr(
+    SumExpr(
+      Left,
+      UnitExpr, 
+      uLLAlt ))
+
+val iLL = 
+  RollExpr(
+    SumExpr(
+      Right,
+      PairExpr(
+        e5_2,
+        unitLL),
+      uLLType))
+
+val iLLAlt = 
+  RollExpr(
+    SumExpr(
+      Right,
+      PairExpr(
+        e5_2,
+        unitAlt),
+      uLLAlt))
+
+val intListList = 
+  RollExpr(
+    SumExpr(Right, 
+            PairExpr(
+              intList1,
+              RollExpr(SumExpr(Right,
+                      PairExpr(
+                        intList2,
+                        RollExpr(
+                          SumExpr(Left,UnitExpr,uType))),
+                      uLLType))),
+            uLLType));
+
+val illExpand = 
+  RollExpr(
+    SumExpr(
+      Right,
+      PairExpr(
+        
+        RollExpr(
+          SumExpr(Right,
+                  PairExpr(
+                    IntExpr(5),
+                    RollExpr(
+                      SumExpr(Right,
+                              PairExpr(
+                                IntExpr(6),
+                                RollExpr(
+                                  SumExpr(Left,UnitExpr,uType))),
+                              uType))),
+                  uType))
+         ,
+
+        RollExpr(
+          SumExpr(
+            Left,
+            UnitExpr, 
+            uLLAlt ))
+
+        ),
+      uLLAlt))
+
+  val typeofe = (Prod(Rec ("tttt",Sum (Unit,Prod (Int,Var "tttt"))),
+        Rec ("tttt",Sum (Unit,Prod (Int,Var "tttt")))));
+
+val typeofrev = Prod
+             (Rec ("t",Sum (Unit,Prod (Int,Var "t"))),
+              Rec ("t",Sum (Unit,Prod (Int,Var "t"))));
